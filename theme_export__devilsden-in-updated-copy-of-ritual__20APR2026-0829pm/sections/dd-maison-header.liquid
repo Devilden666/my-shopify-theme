@@ -1,0 +1,174 @@
+<style>
+  #shopify-section-header, .header-wrapper, .header, sticky-header { display: none !important; }
+
+  #dd-global-header-{{ section.id }} {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    background-color: #000000;
+    z-index: 9999;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+
+  #dd-global-header-{{ section.id }} .dd-header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px 40px;
+    box-sizing: border-box;
+  }
+
+  .header-left, .header-right { display: flex; align-items: center; gap: 30px; flex: 1; }
+  .header-right { justify-content: flex-end; }
+  .header-center { flex: 1; display: flex; justify-content: center; }
+
+  .dd-nav-link, .logo-text, .dd-dropdown-link {
+    color: #ffffff;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    font-weight: 600;
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+
+  .dd-nav-link:hover, .logo-text:hover { opacity: 0.5; }
+
+  /* THE DROPDOWN BOX */
+  .dd-menu-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 40px;
+    background: #000000;
+    border: 1px solid #222222;
+    min-width: 260px;
+    padding: 15px 0;
+    display: none;
+    flex-direction: column;
+    z-index: 10000;
+    margin-top: 10px;
+  }
+
+  .dd-dropdown-link {
+    padding: 12px 25px;
+    display: block;
+    width: 100%;
+    text-align: left;
+    color: #888888;
+  }
+
+  .dd-dropdown-link:hover { color: #ffffff; background: #0a0a0a; }
+  .dd-menu-parent { position: relative; }
+
+  @media screen and (max-width: 768px) {
+    #dd-global-header-{{ section.id }} .dd-header-inner { padding: 25px 20px; }
+    .hide-mobile { display: none !important; }
+    .dd-menu-dropdown { left: 0; width: 220px; }
+  }
+</style>
+
+<div class="dd-standard-header" id="dd-global-header-{{ section.id }}">
+  <div class="dd-header-inner">
+    
+    <div class="header-left">
+      <div class="dd-menu-parent">
+        <button type="button" class="dd-nav-link" id="dd-menu-trigger" aria-haspopup="true">MENU</button>
+        
+        <div class="dd-menu-dropdown" id="dd-menu-content">
+          
+          {% comment %} PASS 1: Render all standard links, skipping dashboard, jewel, and sell with us {% endcomment %}
+          {% for link in linklists.main-menu.links %}
+            {% assign link_title_down = link.title | downcase %}
+            
+            {% unless link_title_down contains 'dashboard' or link_title_down contains 'jewel' or link_title_down contains 'sell with us' %}
+              <a href="{{ link.url }}" class="dd-dropdown-link">{{ link.title }}</a>
+            {% endunless %}
+          {% endfor %}
+
+          {% comment %} PASS 2: Force 'sell with us' to always render below the others {% endcomment %}
+          {% for link in linklists.main-menu.links %}
+            {% assign link_title_down = link.title | downcase %}
+            
+            {% if link_title_down contains 'sell with us' %}
+              <a href="{{ link.url }}" class="dd-dropdown-link" style="color: #ff0000;">{{ link.title }}</a>
+            {% endif %}
+          {% endfor %}
+
+          <div style="height: 1px; background: #222; margin: 10px 25px;"></div>
+          <a href="/pages/seller-dashboard" class="dd-dropdown-link" style="color: #00ff00;">[ MY DASHBOARD ]</a>
+        </div>
+      </div>
+      
+      <a href="{{ routes.search_url }}" class="dd-nav-link hide-mobile" onclick="if(triggerThemeElement('search')) return false;">SEARCH</a>
+    </div>
+
+    <div class="header-center">
+      <a href="{{ routes.root_url }}" class="logo-text">DEVIL'S DEN</a>
+    </div>
+
+    <div class="header-right">
+      {% if customer %}
+        <a href="/pages/seller-dashboard" class="dd-nav-link hide-mobile">ACCOUNT</a>
+      {% else %}
+        <a href="{{ routes.account_login_url }}" class="dd-nav-link hide-mobile">LOGIN</a>
+      {% endif %}
+      
+      <a href="{{ routes.cart_url }}" class="dd-nav-link" onclick="if(triggerThemeElement('cart')) return false;">
+        CART {% if cart.item_count > 0 %}({{ cart.item_count }}){% endif %}
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  (function() {
+    const initMenu = () => {
+      const trigger = document.getElementById('dd-menu-trigger');
+      const menu = document.getElementById('dd-menu-content');
+      if (!trigger || !menu) return;
+
+      // Aggressively prevent default theme behavior
+      const toggleMenu = (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const isHidden = window.getComputedStyle(menu).display === 'none';
+        menu.style.display = isHidden ? 'flex' : 'none';
+        return false;
+      };
+
+      trigger.onclick = toggleMenu;
+      trigger.addEventListener('touchstart', toggleMenu, {passive: false});
+
+      document.addEventListener('click', (e) => {
+        if (!menu.contains(e.target) && e.target !== trigger) {
+          menu.style.display = 'none';
+        }
+      });
+    };
+
+    document.addEventListener('DOMContentLoaded', initMenu);
+    if (Shopify.designMode) document.addEventListener('shopify:section:load', initMenu);
+  })();
+
+  function triggerThemeElement(type) {
+    let s = type === 'search' ? '.header__icon--search, details-modal summary' : '#cart-icon-bubble, .header__icon--cart';
+    const e = document.querySelector(s);
+    if (e) { e.click(); return true; }
+    return false;
+  }
+</script>
+
+{% schema %}
+{
+  "name": "Damso Global Header",
+  "tag": "section",
+  "class": "section-header",
+  "settings": [],
+  "presets": [{ "name": "Damso Global Header" }]
+}
+{% endschema %}

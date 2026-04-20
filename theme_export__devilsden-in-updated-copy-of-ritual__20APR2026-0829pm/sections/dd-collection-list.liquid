@@ -1,0 +1,260 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<style>
+  /* HIDE DEFAULT LISTS */
+  #shopify-section-collection-list-template,
+  .collection-list-wrapper, .collection-list-title, .collection-list {
+    display: none !important;
+  }
+
+  /* LAYOUT */
+  .dd-split-directory {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background-color: #000;
+    padding-top: 80px; 
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dd-grid-container {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 100%; 
+    border-top: 1px solid #000;
+    gap: 4px; 
+    background-color: #fff; 
+    padding: 0 4px 4px 4px; 
+  }
+
+  .dd-grid-cell {
+    position: relative;
+    background-color: #f6f6f6; 
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    cursor: pointer;
+    
+    /* CRITICAL MOBILE UI FIXES: Prevent native blue tap flashes and text highlighting */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  /* NATIVE IMAGE WRAPPER */
+  .dd-canvas-wrapper {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    padding: 3vw; 
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* PERFECTLY SHARP IMAGE RENDER */
+  .dd-canvas-wrapper img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    filter: grayscale(100%) contrast(1.1) brightness(0.9);
+    
+    /* AWWWARDS TIER: Hardware acceleration for 60fps mobile scaling */
+    transform: translateZ(0);
+    will-change: transform, filter;
+    transition: filter 0.6s ease, transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  /* BRUTALIST LABEL */
+  .dd-cell-label {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    background-color: #fff;
+    color: #000;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: clamp(1rem, 1.5vw, 1.5rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    padding: 12px 30px;
+    border: 2px solid #000;
+    overflow: hidden;
+    text-align: center;
+    white-space: nowrap;
+    
+    will-change: transform, background-color, color;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+  }
+
+  .dd-label-text {
+    display: inline-block;
+    transform: translateY(0);
+    will-change: transform;
+  }
+
+  /* =========================================
+     DESKTOP INTERACTION (Hover Devices Only)
+     ========================================= */
+  @media (hover: hover) and (pointer: fine) {
+    .dd-grid-cell:hover .dd-canvas-wrapper img {
+      transform: scale(1.05) translateZ(0); 
+      filter: grayscale(0%) contrast(1) brightness(1);
+    }
+    .dd-grid-cell:hover .dd-cell-label {
+      background-color: #000;
+      color: #fff;
+    }
+  }
+
+  /* =========================================
+     MOBILE INTERACTION (Touch Devices Only)
+     ========================================= */
+  @media (hover: none) and (pointer: coarse) {
+    /* Instantly respond to the user's thumb press (Native App Feel) */
+    .dd-grid-cell:active .dd-canvas-wrapper img {
+      transform: scale(0.96) translateZ(0); /* Tactile depress effect */
+      filter: grayscale(0%) contrast(1) brightness(1);
+      transition: filter 0.1s ease, transform 0.1s ease; /* Snappy response */
+    }
+    .dd-grid-cell:active .dd-cell-label {
+      background-color: #000;
+      color: #fff;
+      transform: translateX(-50%) scale(0.96); /* Button depress effect */
+      transition: background-color 0.1s, color 0.1s, transform 0.1s;
+    }
+  }
+
+  /* MOBILE LAYOUT OPTIMIZATIONS */
+  @media screen and (max-width: 900px) {
+    .dd-grid-container {
+      grid-template-columns: 1fr; 
+      grid-template-rows: repeat(3, 1fr); 
+    }
+    .dd-cell-label {
+      bottom: 30px;
+      padding: 10px 24px; /* Slightly refined for smaller screens */
+    }
+    .dd-canvas-wrapper {
+      padding: 6vw; /* More breathing room so images aren't cut off by edges */
+    }
+  }
+</style>
+
+<div class="dd-split-directory" id="directory-{{ section.id }}">
+  <div class="dd-grid-container">
+    
+    {% if section.blocks.size > 0 %}
+      {% for block in section.blocks limit: 3 %}
+        {% assign target_collection = collections[block.settings.collection] %}
+        
+        {% if target_collection != blank %}
+          
+          {% assign final_image_obj = null %}
+          
+          {% if block.settings.image_override %}
+             {% assign final_image_obj = block.settings.image_override %}
+          {% elsif target_collection.image %}
+             {% assign final_image_obj = target_collection.image %}
+          {% elsif target_collection.products.first and target_collection.products.first.featured_image %}
+             {% assign final_image_obj = target_collection.products.first.featured_image %}
+          {% endif %}
+
+          <a href="{{ target_collection.url }}" class="dd-grid-cell" {{ block.shopify_attributes }}>
+            <div class="dd-canvas-wrapper">
+               
+               {% if final_image_obj %}
+                 {{ final_image_obj | image_url: width: 2400 | image_tag: 
+                    loading: 'lazy', 
+                    sizes: '(max-width: 900px) 100vw, 33vw', 
+                    widths: '600, 900, 1200, 1800, 2400' 
+                 }}
+               {% endif %}
+
+            </div>
+            <div class="dd-cell-label">
+              <span class="dd-label-text">{{ block.settings.title_override | default: target_collection.title | escape }}</span>
+            </div>
+          </a>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      <div style="grid-column: 1 / -1; padding: 100px; text-align: center; font-family: Helvetica; font-weight: bold; background: white; color: black;">
+        PLEASE ADD EXACTLY 3 BLOCKS IN THE THEME EDITOR
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<script>
+const initDamsoDirectory = () => {
+  const cells = document.querySelectorAll('.dd-grid-cell');
+  if(cells.length === 0) return;
+
+  cells.forEach((cell) => {
+    const labelText = cell.querySelector('.dd-label-text');
+    
+    // CRITICAL JS OPTIMIZATION: Only attach GSAP hover listeners on true desktop devices.
+    // This prevents mobile browsers from firing weird ghost animations on tap.
+    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+        cell.addEventListener('mouseenter', () => {
+            gsap.fromTo(labelText, { y: 15 }, { y: 0, duration: 0.4, ease: "back.out(1.5)" });
+        });
+    }
+  });
+};
+
+document.addEventListener('DOMContentLoaded', initDamsoDirectory);
+
+if (window.Shopify && Shopify.designMode) {
+  document.addEventListener('shopify:section:load', initDamsoDirectory);
+}
+</script>
+
+{% schema %}
+{
+  "name": "Damso Split Directory",
+  "max_blocks": 3,
+  "settings": [],
+  "blocks": [
+    {
+      "type": "collection",
+      "name": "Category Block",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Select Collection"
+        },
+        {
+          "type": "text",
+          "id": "title_override",
+          "label": "Text Override (e.g., APPAREL)"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_override",
+          "label": "Image Override"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Damso Split Directory",
+      "category": "Collection"
+    }
+  ]
+}
+{% endschema %}

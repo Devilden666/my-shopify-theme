@@ -1,0 +1,838 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js"></script>
+
+<div class="dd-damso-engine" id="engine-{{ section.id }}">
+  
+  <div class="swipe-catcher"></div>
+
+  <div class="void-viewport">
+    <canvas id="canvas-{{ section.id }}"></canvas>
+  </div>
+
+  <div class="numbered-overlay" id="overlay-{{ section.id }}">
+    <div class="overlay-grid">
+      <div class="product-info">
+         
+         <div class="card-header">
+            <h3 class="o-name">NAME</h3>
+            <span class="o-badge">ARCHIVE</span>
+         </div>
+         
+         <div class="card-body">
+            <div class="o-accordion">
+               <div class="accordion-toggle" id="acc-toggle-{{ section.id }}">
+                  <span>TECHNICAL SPECIFICATIONS</span>
+                  <span class="acc-icon">+</span>
+               </div>
+               <div class="accordion-content" id="acc-content-{{ section.id }}">
+                  <div class="accordion-inner o-desc"></div>
+               </div>
+            </div>
+
+            <div class="card-image-container">
+               <img src="" alt="Product" class="o-card-img" id="card-img-{{ section.id }}" width="1000" height="1000" loading="lazy">
+            </div>
+         </div>
+
+         <div class="card-bottom">
+            <div id="add-to-cart-wrapper-{{ section.id }}" class="o-form">
+               <input type="hidden" class="o-variant-id" value="">
+               
+               <div class="o-size-selector">
+                  <label>SIZE</label>
+                  <select class="o-variant-select"></select>
+               </div>
+               
+               <button type="button" class="acquire-btn" id="acquire-btn-{{ section.id }}">
+                  <span class="btn-text">ADD TO CART</span><span class="price-dash"> - </span><span class="o-price">₹0.00</span>
+               </button>
+            </div>
+         </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="interface-layer">
+    <div class="hud-top">
+       <a href="/" class="brand-logo-pill">{{ shop.name | default: "DEVIL'S DEN" }}</a>
+       
+       <div class="dynamic-meta" id="meta-{{ section.id }}">
+          <span class="m-badge">GALLERY</span> 
+          <div class="clip-wrap"><span class="m-title">LOADING...</span></div>
+       </div>
+    </div>
+
+    <div class="controller-anchor">
+      
+      <div class="os-floating-menu" id="pill-menu-{{ section.id }}">
+         <div class="os-menu-items">
+            <a href="/" class="os-item active">APPAREL</a>
+            <a href="/collections/accessories" class="os-item">ACCESSORIES</a>
+            <a href="/collections/thrift-shop" class="os-item">THRIFT SHOP</a>
+            <a href="/cart" class="os-cart-trigger">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6zM3 6h18M16 10a4 4 0 01-8 0"/></svg>
+               <span class="cart-count">{{ cart.item_count | default: '0' }}</span>
+            </a>
+         </div>
+      </div>
+
+      <div class="pod-morph-container" id="pod-wrapper-{{ section.id }}">
+        <div class="pod-spin-bg" id="pod-spin-{{ section.id }}"></div>
+        
+        <div class="pod-ui-circle" id="ui-circle-{{ section.id }}">
+           <div class="wheel-btn menu-t" id="menu-trigger-{{ section.id }}">MENU</div>
+           <div class="wheel-btn prev-l" data-nav="prev"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M11 12l9-7v14l-9-7zM2 12l9-7v14l-9-7z"/></svg></div>
+           <div class="wheel-btn next-r" data-nav="next"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 12l-9 7V5l9 7zM22 12l-9 7V5l9 7z"/></svg></div>
+        </div>
+        <div class="pod-ui-pill" id="ui-pill-{{ section.id }}">
+           <div class="pill-btn prev-pill" data-nav="prev"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg></div>
+           <div class="pill-btn next-pill" data-nav="next"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></div>
+        </div>
+        <div class="pod-center" id="action-{{ section.id }}"><div class="center-symbol"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  :root { --bg: #ffffff; --text: #000; --dial: #111; }
+  
+  .dd-damso-engine { 
+    height: 100vh; 
+    height: 100dvh; 
+    width: 100vw; 
+    background: var(--bg); 
+    overflow: hidden; 
+    position: relative; 
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+    touch-action: pan-y; 
+    user-select: none;
+    -webkit-user-select: none; 
+  }
+  
+  .swipe-catcher {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    cursor: grab;
+    touch-action: pan-y; 
+  }
+  .swipe-catcher:active { cursor: grabbing; }
+
+  .void-viewport { position: absolute; inset: 0; z-index: 5; pointer-events: none; transition: opacity 0.4s ease; }
+  #canvas-{{ section.id }} { width: 100%; height: 100%; }
+  
+  .interface-layer { 
+    position: absolute; inset: 0; z-index: 100; display: flex; flex-direction: column; justify-content: space-between; 
+    padding: 25px 40px; pointer-events: none; 
+  }
+  .numbered-overlay { position: absolute; inset: 0; z-index: 40; background: transparent; display: none; opacity: 0; padding: 0; pointer-events: none; }
+  
+  .hud-top { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; pointer-events: none; flex-shrink: 0; }
+  .brand-logo-pill { background: #000; color: #fff; padding: 6px 12px; font-size: 11px; font-weight: 900; letter-spacing: 1px; text-decoration: none; pointer-events: auto; text-transform: uppercase; }
+  .dynamic-meta { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 11px; pointer-events: auto; }
+  .m-badge { background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 9px; color: #555; }
+  .clip-wrap { overflow: hidden; display: inline-block; vertical-align: top; }
+  .m-title { display: inline-block; color: #000; text-transform: uppercase; }
+
+  .os-floating-menu { position: absolute; bottom: 180px; left: 50%; transform: translate(-50%, 0); z-index: 50; opacity: 0; pointer-events: none; display: flex; justify-content: center; }
+  .os-menu-items { background: #1a1a1a; border-radius: 40px; padding: 6px 8px; display: flex; align-items: center; gap: 4px; box-shadow: 0 15px 35px rgba(0,0,0,0.25); }
+  .os-item { color: #888; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; padding: 12px 20px; border-radius: 30px; text-decoration: none; transition: 0.3s; pointer-events: auto; white-space: nowrap; }
+  .os-item.active, .os-item:hover { color: #000; background: #fff; }
+  .os-cart-trigger { display: flex; align-items: center; gap: 8px; padding: 0 15px; border-left: 1px solid #333; height: 24px; color: #fff; text-decoration: none; cursor: pointer; transition: 0.3s; pointer-events: auto; }
+  .cart-count { background: #fff; color: #000; font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 900; }
+
+  .controller-anchor { position: relative; pointer-events: none; display: flex; justify-content: center; align-items: flex-end; height: 160px; flex-shrink: 0; }
+  .pod-morph-container { position: relative; pointer-events: auto; width: 160px; height: 160px; border-radius: 80px; background: var(--dial); overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.15); z-index: 20; }
+  .pod-spin-bg { position: absolute; inset: 0; width: 100%; height: 100%; background: transparent; cursor: grab; touch-action: pan-y; pointer-events: auto; }
+  .pod-spin-bg:active { cursor: grabbing; }
+  .pod-ui-circle { position: absolute; inset: 0; pointer-events: none; }
+  
+  .wheel-btn, .pill-btn { position: absolute; color: #fff; opacity: 0.6; font-size: 9px; font-weight: 900; letter-spacing: 1px; transition: opacity 0.3s, transform 0.3s; pointer-events: auto; cursor: pointer; padding: 12px; z-index: 30; }
+  .wheel-btn::after, .pill-btn::after { content: ''; position: absolute; inset: -15px; } 
+  
+  .menu-t { top: 8px; left: 50%; transform: translateX(-50%); padding: 8px; }
+  .menu-t:hover { opacity: 1; }
+  .prev-l { left: 8px; top: 50%; transform: translateY(-50%); }
+  .next-r { right: 8px; top: 50%; transform: translateY(-50%); }
+  .prev-l:hover, .next-r:hover { opacity: 1; }
+  .pod-ui-pill { position: absolute; inset: 0; pointer-events: none; opacity: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+  .pill-btn { display: flex; align-items: center; justify-content: center; padding: 10px; }
+  .pill-btn:hover { opacity: 1; transform: scale(1.1); }
+  
+  .pod-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50px; height: 50px; background: #000; border: 1px solid transparent; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 40; transition: background 0.3s, border-color 0.3s; pointer-events: auto; }
+  .pod-center::after { content: ''; position: absolute; inset: -10px; }
+
+  .center-symbol { width: 14px; height: 14px; position: relative; pointer-events: none; }
+  .center-symbol::before, .center-symbol::after { 
+     content: ''; position: absolute; background: #fff; width: 100%; height: 3px; top: 50%; left: 0; 
+     transition: transform 0.4s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.3s, background-color 0.3s; 
+     opacity: 0; 
+  }
+  .center-symbol::after { width: 3px; height: 100%; left: 50%; top: 0; }
+  
+  .is-menu-open .center-symbol::before { transform: rotate(45deg); opacity: 1; background: #fff; }
+  .is-menu-open .center-symbol::after { transform: rotate(45deg); opacity: 1; background: #fff; }
+  
+  .is-prod-open { background: #000 !important; border-color: transparent !important; }
+  .is-prod-open .center-symbol::before, .is-prod-open .center-symbol::after { 
+     transform: rotate(45deg); opacity: 1; background: #fff; 
+  }
+
+  .overlay-grid { 
+    display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; box-sizing: border-box; 
+    padding-top: 60px; 
+    padding-bottom: 90px; 
+    padding-left: 20px;
+    padding-right: 20px;
+  } 
+  
+  .product-info { 
+    width: 100%; 
+    max-width: 550px; 
+    max-height: 100%; 
+    display: flex;
+    flex-direction: column; 
+    background: #ffffff !important; 
+    border-radius: 12px; 
+    box-shadow: 0 25px 60px rgba(0,0,0,0.12) !important; 
+    padding: 30px 40px; 
+    pointer-events: auto; 
+    box-sizing: border-box;
+    touch-action: pan-y; 
+  }
+
+  .card-header { flex-shrink: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+  .o-name { font-size: 17px; color: #000; font-weight: 900; margin: 0; line-height: 1.2; text-transform: uppercase; letter-spacing: 0.5px; }
+  .o-badge { background: #e8e8e8; padding: 4px 10px; border-radius: 4px; font-size: 9px; color: #555; font-weight: 800; letter-spacing: 0.5px; }
+  
+  .card-body { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; margin-bottom: 15px; }
+
+  .o-accordion { flex-shrink: 0; width: 100%; text-align: left; margin-bottom: 10px; }
+  .accordion-toggle { display: inline-flex; align-items: center; gap: 8px; background: #f4f4f4; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; color: #333; transition: 0.3s; }
+  .accordion-toggle:hover { background: #e8e8e8; color: #000; }
+  .accordion-content { height: 0; overflow: hidden; }
+  .accordion-inner { padding: 15px 0 5px 0; font-size: 13px; color: #555; line-height: 1.6; }
+  
+  .card-image-container { 
+    flex-grow: 1;
+    min-height: 0; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    padding: 10px 0; 
+    position: relative;
+    overflow: hidden; 
+  }
+  
+  .card-image-container::after {
+    content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 30px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0), #ffffff); pointer-events: none;
+  }
+
+  .o-card-img { 
+    max-height: 100%; 
+    max-width: 100%; 
+    object-fit: contain; 
+    display: block;
+  } 
+  
+  .card-bottom { flex-shrink: 0; }
+  .o-form { opacity: 0; transform: translateY(10px); width: 100%; }
+  
+  .o-size-selector { display: flex; justify-content: space-between; align-items: center; padding: 0 5px; margin-bottom: 15px; }
+  .o-size-selector label { font-size: 11px; font-weight: 900; color: #000; letter-spacing: 1px; }
+  .o-size-selector select { background: transparent; border: none; font-size: 12px; font-weight: 900; color: #000; cursor: pointer; outline: none; text-align: right; appearance: none; -webkit-appearance: none; }
+  
+  .acquire-btn { position: relative; z-index: 100; pointer-events: auto; width: 100%; background: #000; color: #fff; border: none; padding: 18px 20px; font-size: 13px; font-weight: 900; cursor: pointer; letter-spacing: 1.5px; transition: background 0.3s; border-radius: 6px; display: flex; justify-content: center; align-items: center; text-transform: uppercase; }
+  .acquire-btn:hover { background: #222; }
+  .acquire-btn:disabled { background: #555; cursor: not-allowed; color: #eee; } 
+  .o-price { font-weight: 900; font-size: 14px; margin-left: 5px; }
+  .price-dash { margin-left: 5px; }
+
+  @media screen and (max-width: 768px) {
+    .interface-layer { padding: 15px 15px 20px 15px; } 
+    .os-floating-menu { bottom: 170px; width: 95%; }
+    .overlay-grid { padding-bottom: 80px; padding-top: 60px; padding-left: 10px; padding-right: 10px; } 
+    
+    .product-info { padding: 25px 20px; }
+    .o-name { font-size: 15px; }
+    .acquire-btn { padding: 16px; font-size: 11px; }
+    .os-menu-items { width: 100%; justify-content: space-between; padding: 4px; }
+    .os-item { padding: 10px; font-size: 9px; }
+  }
+</style>
+
+<script>
+const runDamsoLinearEngine = () => {
+  const container = document.querySelector('#engine-{{ section.id }}');
+  const canvas = container.querySelector('#canvas-{{ section.id }}');
+  const wheelNode = container.querySelector('#pod-spin-{{ section.id }}');
+  const swipeCatcher = container.querySelector('.swipe-catcher');
+  const voidViewport = container.querySelector('.void-viewport');
+  if(!canvas || !window.THREE || !window.gsap) return;
+
+  gsap.defaults({ ease: "expo.out" });
+  const isMobile = window.innerWidth < 768;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+  renderer.setSize(container.offsetWidth, container.offsetHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace; 
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xffffff);
+  
+  const cameraGroup = new THREE.Group();
+  scene.add(cameraGroup);
+  
+  const camera = new THREE.PerspectiveCamera(30, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+  camera.position.z = isMobile ? 55 : 40; 
+  cameraGroup.add(camera);
+
+  const mainGroup = new THREE.Group();
+  scene.add(mainGroup);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 2.5));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+  dirLight.position.set(0, 5, 10);
+  scene.add(dirLight);
+
+  let data = [
+    {% for block in section.blocks %}
+      {% assign prod = block.settings.linked_product %}
+      
+      {% assign final_img = "" %}
+      {% if block.settings.image %}
+         {% assign final_img = block.settings.image | image_url: width: 1000 %}
+      {% elsif prod.featured_image %}
+         {% assign final_img = prod.featured_image | image_url: width: 1000 %}
+      {% endif %}
+
+      {
+        t: `{{ block.settings.title | default: prod.title | default: 'ITEM' | escape }}`,
+        img: `{{ final_img }}`,
+        p: `{{ block.settings.price | default: prod.price | money | default: '₹0.00' }}`,
+        desc: {{ prod.description | default: '<p>PRECISE MECHANICAL EXECUTION. DESIGNED BY NUMBERED STANDARDS.</p>' | json }},
+        hasProduct: {% if prod != blank %}true{% else %}false{% endif %},
+        variants: [
+          {% if prod != blank %}
+            {% for variant in prod.variants %}
+              { id: {{ variant.id }}, title: `{{ variant.title | escape }}`, available: {{ variant.available }} }{% unless forloop.last %},{% endunless %}
+            {% endfor %}
+          {% endif %}
+        ]
+      }{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ];
+
+  data = data.filter(item => item.img && item.img.trim() !== "");
+
+  const loader = new THREE.TextureLoader();
+  loader.setCrossOrigin('anonymous');
+  
+  const meshes = [];
+  const gap = 6.5; 
+
+  data.forEach((item, i) => {
+    loader.load(item.img, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.generateMipmaps = false; 
+        tex.minFilter = THREE.LinearFilter; 
+        tex.magFilter = THREE.LinearFilter;
+        if(renderer.capabilities.getMaxAnisotropy) {
+           tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        }
+
+        const aspect = tex.image.width / tex.image.height;
+        let planeHeight = 7; 
+        let planeWidth = planeHeight * aspect;
+
+        if (planeWidth > 16) {
+            planeWidth = 16;
+            planeHeight = planeWidth / aspect;
+        }
+
+        const geom = new THREE.PlaneGeometry(planeWidth, planeHeight);
+        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+        const mesh = new THREE.Mesh(geom, mat);
+        
+        mainGroup.add(mesh);
+        meshes.push({ mesh, index: i });
+    });
+  });
+
+  let curIdx = 0;
+  let isProductOpen = false;
+  let isMenuOpen = false;
+
+  const updateTitle = () => {
+    const safeIdx = Math.max(0, Math.min(curIdx, data.length - 1));
+    if(!data[safeIdx]) return;
+    
+    const titleEl = container.querySelector('#meta-{{ section.id }} .m-title');
+    if(!titleEl) return;
+    
+    gsap.to(titleEl, { 
+       yPercent: -100, duration: 0.25, ease: "power2.in",
+       onComplete: () => {
+          titleEl.innerText = data[safeIdx].t;
+          gsap.fromTo(titleEl, { yPercent: 100 }, { yPercent: 0, duration: 0.3, ease: "power3.out" });
+       }
+    });
+  };
+
+  const goToIndex = (dir, speed = 0.8) => {
+    let currentRot = gsap.getProperty(wheelNode, "rotation") || 0;
+    let currentContinuousIdx = (currentRot / 360) * 6;
+
+    let targetContinuousIdx = Math.round(currentContinuousIdx);
+    if (dir === 'next') targetContinuousIdx++;
+    if (dir === 'prev') targetContinuousIdx--;
+
+    let newRot = (targetContinuousIdx / 6) * 360;
+
+    gsap.to(wheelNode, { rotation: newRot, duration: speed, overwrite: "auto" });
+
+    if (isProductOpen) {
+       let normalizedIdx = targetContinuousIdx % data.length;
+       if (normalizedIdx < 0) normalizedIdx += data.length;
+       curIdx = normalizedIdx;
+       updateProductDetails();
+    }
+  };
+
+  // --- NATIVE GLOBAL SWIPE WITH SCROLL INTENT DETECTION ---
+  let isSwiping = false;
+  let isIntentDecided = false;
+  let startClientX = 0;
+  let startClientY = 0;
+  let startRot = 0;
+  let lastClientX = 0;
+  let velocity = 0;
+  let lastTime = 0;
+
+  const handleSwipeStart = (clientX, clientY) => {
+      isSwiping = true;
+      isIntentDecided = false; 
+      
+      startClientX = clientX;
+      startClientY = clientY;
+      lastClientX = clientX;
+      lastTime = Date.now();
+      velocity = 0;
+      
+      startRot = gsap.getProperty(wheelNode, "rotation") || 0;
+      gsap.killTweensOf(wheelNode); 
+  };
+
+  const handleSwipeMove = (clientX, clientY) => {
+      let deltaX = clientX - startClientX;
+      let deltaY = Math.abs(clientY - startClientY);
+
+      // If we haven't locked into a swipe direction yet
+      if (!isIntentDecided) {
+          if (deltaY > 10 && deltaY > Math.abs(deltaX)) {
+              // User is attempting to scroll up/down naturally. Abort the carousel interaction.
+              isSwiping = false;
+              return;
+          } else if (Math.abs(deltaX) > 10) {
+              // User is swiping left/right. Lock into carousel spin.
+              isIntentDecided = true;
+              swipeCatcher.style.cursor = 'grabbing';
+          } else {
+              return; // Wait for them to move 10px to determine intent
+          }
+      }
+
+      gsap.set(wheelNode, { rotation: startRot - (deltaX * 0.4) });
+      
+      let now = Date.now();
+      let dt = now - lastTime;
+      if(dt > 0) {
+          velocity = (clientX - lastClientX) / dt;
+      }
+      lastClientX = clientX;
+      lastTime = now;
+  };
+
+  const handleSwipeEnd = () => {
+      isSwiping = false;
+      isIntentDecided = false;
+      swipeCatcher.style.cursor = 'grab';
+      
+      let currentRot = gsap.getProperty(wheelNode, "rotation") || 0;
+      let safeVelocity = Math.max(-5, Math.min(5, velocity)); 
+      let momentumRot = currentRot - (safeVelocity * 120); 
+      
+      let currentContinuousIdx = (momentumRot / 360) * 6;
+      let targetContinuousIdx = Math.round(currentContinuousIdx);
+      let snapRot = (targetContinuousIdx / 6) * 360;
+      
+      gsap.to(wheelNode, { rotation: snapRot, duration: 0.8, ease: "power3.out", overwrite: "auto" });
+  };
+
+  // Mouse Handlers
+  swipeCatcher.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return; 
+      if (isProductOpen || isMenuOpen) return;
+      
+      swipeCatcher.setPointerCapture(e.pointerId);
+      handleSwipeStart(e.clientX, e.clientY);
+  });
+  
+  swipeCatcher.addEventListener('pointermove', (e) => {
+      if (swipeCatcher.hasPointerCapture(e.pointerId) && isSwiping) {
+          handleSwipeMove(e.clientX, e.clientY);
+      }
+  });
+  
+  swipeCatcher.addEventListener('pointerup', (e) => {
+      swipeCatcher.releasePointerCapture(e.pointerId);
+      if (isSwiping) handleSwipeEnd();
+  });
+  
+  swipeCatcher.addEventListener('pointercancel', (e) => {
+      swipeCatcher.releasePointerCapture(e.pointerId);
+      if (isSwiping) handleSwipeEnd();
+  });
+
+  // Touch Handlers with passive: true to guarantee smooth vertical scrolling
+  swipeCatcher.addEventListener('touchstart', (e) => {
+      if (isProductOpen || isMenuOpen) return;
+      handleSwipeStart(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  
+  window.addEventListener('touchmove', (e) => {
+      if(isSwiping) handleSwipeMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  
+  window.addEventListener('touchend', () => { if(isSwiping) handleSwipeEnd(); });
+  window.addEventListener('touchcancel', () => { if(isSwiping) handleSwipeEnd(); });
+
+
+  container.querySelectorAll('[data-nav="next"]').forEach(el => el.onclick = () => goToIndex('next'));
+  container.querySelectorAll('[data-nav="prev"]').forEach(el => el.onclick = () => goToIndex('prev'));
+
+  const podCenter = container.querySelector('#action-{{ section.id }}');
+  const overlay = container.querySelector('#overlay-{{ section.id }}');
+  const topMetaTitle = container.querySelector('#meta-{{ section.id }}');
+  
+  const accToggle = container.querySelector('#acc-toggle-{{ section.id }}');
+  const accContent = container.querySelector('#acc-content-{{ section.id }}');
+  const accIcon = accToggle ? accToggle.querySelector('.acc-icon') : null;
+  let accOpen = false;
+
+  if(accToggle) {
+      accToggle.onclick = () => {
+         accOpen = !accOpen;
+         if(accOpen) {
+            gsap.to(accContent, { height: 'auto', duration: 0.4, ease: "power2.out" });
+            if(accIcon) accIcon.innerText = '-';
+         } else {
+            gsap.to(accContent, { height: 0, duration: 0.4, ease: "power2.out" });
+            if(accIcon) accIcon.innerText = '+';
+         }
+      };
+  }
+
+  const toggleXSymbol = () => {
+    if (isMenuOpen) {
+       swipeCatcher.style.pointerEvents = 'none'; 
+       podCenter.classList.add('is-menu-open');
+       podCenter.classList.remove('is-prod-open');
+       gsap.to(podCenter, { width: 50, height: 50, duration: 0.4 });
+    } else if (isProductOpen) {
+       swipeCatcher.style.pointerEvents = 'none'; 
+       podCenter.classList.add('is-prod-open');
+       podCenter.classList.remove('is-menu-open');
+       gsap.to(podCenter, { width: 40, height: 40, duration: 0.4 });
+    } else {
+       swipeCatcher.style.pointerEvents = 'auto'; 
+       podCenter.classList.remove('is-menu-open', 'is-prod-open');
+       gsap.to(podCenter, { width: 50, height: 50, duration: 0.4 });
+    }
+  };
+
+  const updateProductDetails = () => {
+    const safeItem = data[curIdx];
+    if(!safeItem) return;
+
+    accOpen = false;
+    gsap.set(accContent, { height: 0 });
+    if(accIcon) accIcon.innerText = '+';
+
+    const els = ['.o-name', '.o-badge', '.o-form'].map(c => container.querySelector(c)).filter(Boolean);
+    gsap.killTweensOf(els);
+    
+    const imgContainer = container.querySelector('.card-image-container');
+    gsap.killTweensOf(imgContainer);
+
+    const tl = gsap.timeline();
+    tl.to(els, { opacity: 0, duration: 0.2 })
+      .to(imgContainer, { opacity: 0, duration: 0.2 }, 0)
+      .call(() => {
+        container.querySelector('.o-name').innerText = safeItem.t;
+        container.querySelector('.o-price').innerText = safeItem.p;
+        container.querySelector('.o-desc').innerHTML = safeItem.desc;
+        
+        const innerImg = container.querySelector('#card-img-{{ section.id }}');
+        if(safeItem.img) {
+            innerImg.src = safeItem.img;
+            innerImg.style.display = 'block';
+        } else {
+            innerImg.style.display = 'none';
+        }
+        
+        const variantSelect = container.querySelector('.o-variant-select');
+        const variantIdInput = container.querySelector('.o-variant-id');
+        const sizeSelectorDiv = container.querySelector('.o-size-selector');
+        const acqBtn = container.querySelector('.acquire-btn');
+        const btnText = container.querySelector('.btn-text');
+        const priceDash = container.querySelector('.price-dash');
+        const priceTag = container.querySelector('.o-price');
+        
+        variantSelect.innerHTML = '';
+        
+        if (safeItem.hasProduct && safeItem.variants.length > 0) {
+           acqBtn.disabled = false;
+           btnText.innerText = "ADD TO CART"; 
+           priceDash.style.display = "inline";
+           priceTag.style.display = "inline";
+           
+           if(safeItem.variants.length === 1 && safeItem.variants[0].title === 'Default Title') {
+               sizeSelectorDiv.style.display = 'none';
+           } else {
+               sizeSelectorDiv.style.display = 'flex';
+           }
+
+           safeItem.variants.forEach(v => {
+              const opt = document.createElement('option');
+              opt.value = v.id;
+              opt.innerText = v.title;
+              if(!v.available) {
+                 opt.disabled = true;
+                 opt.innerText += ' (Out of stock)';
+              }
+              variantSelect.appendChild(opt);
+           });
+           
+           variantIdInput.value = variantSelect.value;
+           variantSelect.onchange = (e) => { variantIdInput.value = e.target.value; };
+        } else {
+           sizeSelectorDiv.style.display = 'none';
+           acqBtn.disabled = true;
+           btnText.innerText = "OUT OF STOCK";
+           priceDash.style.display = "none";
+           priceTag.style.display = "none";
+           variantIdInput.value = "";
+        }
+      })
+      .fromTo(container.querySelector('.o-name'), { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4 })
+      .fromTo(container.querySelector('.o-badge'), { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4 }, "-=0.2")
+      .fromTo(imgContainer, { scale: 0.95, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4 }, "-=0.2")
+      .fromTo(container.querySelector('.o-form'), { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4 }, "-=0.2");
+  };
+
+  const acqBtn = container.querySelector('#acquire-btn-{{ section.id }}');
+  if(acqBtn) {
+      acqBtn.addEventListener('click', (e) => {
+         e.preventDefault(); 
+         
+         const variantInput = container.querySelector('.o-variant-id');
+         if(!variantInput.value) {
+             alert("Please select a valid size.");
+             return;
+         }
+
+         const btnText = container.querySelector('.btn-text');
+         const originalText = btnText.innerText;
+         
+         btnText.innerText = 'ADDING...';
+         acqBtn.disabled = true;
+
+         let payload = { items: [{ id: parseInt(variantInput.value), quantity: 1 }] };
+
+         let rootUrl = window.Shopify && window.Shopify.routes && window.Shopify.routes.root ? window.Shopify.routes.root : '/';
+         let cartAddUrl = rootUrl + 'cart/add.js';
+         cartAddUrl = cartAddUrl.replace('//', '/');
+
+         fetch(cartAddUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload)
+         })
+         .then(response => {
+            if (!response.ok) throw new Error('Network Error');
+            return response.json();
+         })
+         .then(data => {
+            btnText.innerText = 'ADDED!';
+            fetch(rootUrl + 'cart.js')
+              .then(res => res.json())
+              .then(cartData => {
+                 document.querySelectorAll('.cart-count, .cart-count-bubble span').forEach(el => el.innerText = cartData.item_count);
+                 document.dispatchEvent(new CustomEvent('cart:updated'));
+                 document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+                 document.dispatchEvent(new CustomEvent('cart:build'));
+              });
+            setTimeout(() => { btnText.innerText = originalText; acqBtn.disabled = false; }, 2500);
+         })
+         .catch((error) => {
+            btnText.innerText = 'ERROR ADDING';
+            setTimeout(() => { btnText.innerText = originalText; acqBtn.disabled = false; }, 2000);
+         });
+      });
+  }
+
+  const menuTrigger = container.querySelector('#menu-trigger-{{ section.id }}');
+  if(menuTrigger) {
+      menuTrigger.onclick = () => {
+        if(isProductOpen) return;
+        isMenuOpen = true;
+        toggleXSymbol(); 
+        
+        gsap.fromTo(container.querySelector('#pill-menu-{{ section.id }}'), { opacity: 0, y: 20 }, { opacity: 1, y: 0, pointerEvents: 'auto', duration: 0.6, ease: "back.out(1.2)" });
+      };
+  }
+
+  if(podCenter) {
+      podCenter.onclick = () => {
+        if(isMenuOpen) {
+           isMenuOpen = false;
+           toggleXSymbol(); 
+           
+           gsap.to(container.querySelector('#pill-menu-{{ section.id }}'), { opacity: 0, y: 15, pointerEvents: 'none', duration: 0.4 });
+           return;
+        }
+
+        const tl = gsap.timeline({ defaults: { ease: "expo.inOut", duration: 1.0 } });
+
+        if(isProductOpen) {
+           isProductOpen = false;
+           toggleXSymbol(); 
+           
+           gsap.to(voidViewport, { opacity: 1, duration: 0.5 });
+
+           tl.to(container.querySelector('#pod-wrapper-{{ section.id }}'), { width: 160, height: 160, borderRadius: 80 }, 0)
+             .to(container.querySelector('.pod-ui-pill'), { opacity: 0, pointerEvents: 'none', duration: 0.3 }, 0)
+             .to(container.querySelectorAll('.pod-spin-bg, .pod-ui-circle'), { opacity: 1, pointerEvents: 'auto', duration: 0.4 }, 0.4)
+             .to(overlay, { opacity: 0, pointerEvents: 'none', duration: 0.6 }, 0)
+             .to(camera.position, { z: isMobile ? 55 : 40, x: 0 }, 0)
+             .to(topMetaTitle, { opacity: 1, duration: 0.4 }, 0)
+             .call(() => overlay.style.display = 'none');
+           return;
+        }
+
+        isProductOpen = true;
+        toggleXSymbol(); 
+        overlay.style.display = 'block';
+        
+        gsap.to(voidViewport, { opacity: 0, duration: 0.3 });
+
+        tl.to(container.querySelector('#pod-wrapper-{{ section.id }}'), { width: 220, height: 50, borderRadius: 25 }, 0)
+          .to(container.querySelectorAll('.pod-spin-bg, .pod-ui-circle'), { opacity: 0, pointerEvents: 'none', duration: 0.3 }, 0)
+          .to(container.querySelector('.pod-ui-pill'), { opacity: 1, pointerEvents: 'auto', duration: 0.4 }, 0.6)
+          .to(camera.position, { z: isMobile ? 16 : 10, x: 0 }, 0)
+          .to(topMetaTitle, { opacity: 0, duration: 0.3 }, 0)
+          .to(overlay, { opacity: 1, pointerEvents: 'auto', duration: 0.8 }, 0.2);
+
+        updateProductDetails();
+      };
+  }
+
+  const lerp = (start, end, factor) => start + (end - start) * factor;
+
+  let lastRoundedIdx = null;
+
+  const animate = () => {
+    requestAnimationFrame(animate);
+    
+    let currentRot = gsap.getProperty(wheelNode, "rotation") || 0;
+    let targetXFromRot = -(currentRot / 360) * (gap * 6);
+    
+    mainGroup.position.x = lerp(mainGroup.position.x, targetXFromRot, 0.08);
+
+    let continuousIdx = (currentRot / 360) * 6;
+    let roundedIdx = Math.round(continuousIdx);
+
+    if (roundedIdx !== lastRoundedIdx && !isProductOpen) {
+        lastRoundedIdx = roundedIdx;
+        let normalizedIdx = roundedIdx % data.length;
+        if (normalizedIdx < 0) normalizedIdx += data.length;
+        curIdx = normalizedIdx;
+        updateTitle();
+    }
+
+    const targetCamX = 0;
+    const targetCamY = isProductOpen ? 0 : (isMobile ? -2.5 : -3.5);
+    
+    cameraGroup.position.x += (targetCamX - cameraGroup.position.x) * 0.05;
+    cameraGroup.position.y += (targetCamY - cameraGroup.position.y) * 0.05;
+    
+    const totalWidth = data.length * gap;
+    const halfWidth = totalWidth / 2;
+
+    meshes.forEach((obj) => {
+       let basePos = obj.index * gap;
+       let currentWorldX = basePos + mainGroup.position.x;
+       
+       let remainder = ((currentWorldX + halfWidth) % totalWidth);
+       if (remainder < 0) remainder += totalWidth;
+       let wrappedWorldX = remainder - halfWidth;
+       
+       obj.mesh.position.x = wrappedWorldX - mainGroup.position.x;
+
+       let distFromCenter = Math.abs(wrappedWorldX);
+       const targetScale = Math.max(0.4, 1 - (distFromCenter * 0.025));
+       const targetOpacity = Math.max(0, 1 - (distFromCenter * 0.04));
+       
+       obj.mesh.scale.x = lerp(obj.mesh.scale.x, targetScale, 0.1);
+       obj.mesh.scale.y = lerp(obj.mesh.scale.y, targetScale, 0.1);
+       
+       if(obj.mesh.material) {
+           obj.mesh.material.opacity = lerp(obj.mesh.material.opacity, targetOpacity, 0.1);
+       }
+    });
+
+    renderer.render(scene, camera);
+  };
+  
+  setTimeout(animate, 100);
+
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      renderer.setSize(container.offsetWidth, container.offsetHeight);
+      camera.aspect = container.offsetWidth / container.offsetHeight;
+      camera.updateProjectionMatrix();
+    }, 150);
+  });
+};
+
+document.addEventListener('DD_Engines_Ready', runDamsoLinearEngine);
+if(window.THREE && window.gsap && window.Draggable) runDamsoLinearEngine();
+</script>
+
+{% schema %}
+{
+  "name": "Damso Product Track",
+  "settings": [],
+  "blocks": [
+    {
+      "type": "product",
+      "name": "Product Slide",
+      "settings": [
+        { "type": "product", "id": "linked_product", "label": "Shopify Product" },
+        { "type": "text", "id": "title", "label": "Override Title (Optional)" },
+        { "type": "text", "id": "price", "label": "Override Price (Optional)" },
+        { "type": "image_picker", "id": "image", "label": "Override Image (Optional)" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Damso Product Track" }]
+}
+{% endschema %}

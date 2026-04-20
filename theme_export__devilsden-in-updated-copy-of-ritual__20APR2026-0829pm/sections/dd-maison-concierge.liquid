@@ -1,0 +1,223 @@
+<div class="dd-concierge-container" id="concierge-{{ section.id }}">
+  
+  <div class="concierge-wrapper">
+    <header class="concierge-header">
+       <div class="c-meta">
+          <span class="c-badge">CLIENT SERVICES</span>
+          <span class="c-status">OPERATIONAL / 24:00</span>
+       </div>
+       <h1 class="c-title">CONCIERGE</h1>
+       <p class="c-subtitle">Automated assistance and direct lines to the Devil's Den Syndicate.</p>
+    </header>
+
+    <div class="concierge-grid">
+      
+      <div class="c-col-form">
+         <h2 class="c-section-label">TRANSMIT INQUIRY</h2>
+         
+         {% form 'contact', id: 'ConciergeForm' %}
+            {% if form.posted_successfully? %}
+              <div class="c-success-banner">
+                 <p>TRANSMISSION RECEIVED. EXPECT A RESPONSE WITHIN 24H.</p>
+              </div>
+            {% endif %}
+
+            {{ form.errors | default_errors }}
+
+            <div class="c-field-group">
+               <div class="c-field">
+                  <label for="ContactForm-name">LEGAL NAME</label>
+                  <input type="text" id="ContactForm-name" name="contact[name]" placeholder="Enter Name" required>
+               </div>
+               <div class="c-field">
+                  <label for="ContactForm-email">DIGITAL ADDRESS</label>
+                  <input type="email" id="ContactForm-email" name="contact[email]" placeholder="email@den.com" required>
+               </div>
+            </div>
+
+            <div class="c-field">
+               <label for="ContactForm-subject">SUBJECT OF INQUIRY</label>
+               <select id="ContactForm-subject" name="contact[subject]">
+                  <option value="Order Logistics">Order Logistics</option>
+                  <option value="Hardware Specifications">Hardware Specifications</option>
+                  <option value="Archive Access">Archive Access</option>
+                  <option value="Press & Media">Press / Media</option>
+               </select>
+            </div>
+
+            <div class="c-field">
+               <label for="ContactForm-body">MESSAGE</label>
+               <textarea id="ContactForm-body" name="contact[body]" rows="5" placeholder="Write your message..." required></textarea>
+            </div>
+
+            <button type="submit" class="c-submit-btn">SEND TRANSMISSION</button>
+         {% endform %}
+      </div>
+
+      <div class="c-col-info">
+         <h2 class="c-section-label">LOGISTICAL PROTOCOLS</h2>
+         
+         <div class="c-accordion">
+            <div class="c-acc-item reveal-item">
+               <div class="c-acc-trigger"><span>01 / GLOBAL SHIPPING</span><span class="c-icon">+</span></div>
+               <div class="c-acc-content">
+                  <p>All artifacts are shipped via secure, tracked priority courier. Domestic orders fulfill within 3-5 business days. International transit varies by region.</p>
+               </div>
+            </div>
+
+            <div class="c-acc-item reveal-item">
+               <div class="c-acc-trigger"><span>02 / RETURN POLICY</span><span class="c-icon">+</span></div>
+               <div class="c-acc-content">
+                  <p>Pieces from the Permanent Collection are eligible for return within 14 days of receipt. Archive items and bespoke hardware are final sale.</p>
+               </div>
+            </div>
+
+            <div class="c-acc-item reveal-item">
+               <div class="c-acc-trigger"><span>03 / AUTHENTICITY</span><span class="c-icon">+</span></div>
+               <div class="c-acc-content">
+                  <p>Every Devil's Den object is accompanied by a unique digital Archive Code and physical certificate of authenticity.</p>
+               </div>
+            </div>
+         </div>
+
+         <div class="c-direct-data">
+            <div class="c-data-row">
+               <span>EMAIL</span>
+               <a href="mailto:syndicate@devilsden.com">syndicate@devilsden.com</a>
+            </div>
+            <div class="c-data-row">
+               <span>WHATSAPP</span>
+               <a href="#">+91 98765 43210</a>
+            </div>
+         </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="concierge-dial-anchor">
+     <div class="pod-morph-container" onclick="window.location.href='/'">
+        <div class="pod-spin-bg"><div class="pod-dent"></div></div>
+        <div class="pod-center"></div>
+     </div>
+  </div>
+
+</div>
+
+<style>
+  :root { --c-bg: #ffffff; --c-text: #000000; --c-grey: #999999; --c-border: #eeeeee; }
+  
+  .dd-concierge-container { 
+    background: var(--c-bg); color: var(--c-text); 
+    font-family: 'Helvetica Neue', Helvetica, sans-serif; 
+    min-height: 100vh; padding-bottom: 120px;
+  }
+
+  .concierge-wrapper { max-width: 1400px; margin: 0 auto; padding: 0 5vw; }
+
+  /* HEADER */
+  .concierge-header { padding: 120px 0 80px 0; border-bottom: 1px solid var(--c-border); margin-bottom: 80px; }
+  .c-meta { display: flex; gap: 20px; margin-bottom: 20px; align-items: center; }
+  .c-badge { background: #000; color: #fff; padding: 4px 10px; font-size: 9px; font-weight: 900; letter-spacing: 1px; border-radius: 4px; }
+  .c-status { font-size: 9px; font-weight: 800; color: #52b788; letter-spacing: 1px; }
+  .c-title { font-size: clamp(3rem, 8vw, 7rem); font-weight: 900; letter-spacing: -3px; margin: 0; line-height: 0.9; }
+  .c-subtitle { font-size: 13px; font-weight: 500; color: #666; margin-top: 30px; max-width: 400px; line-height: 1.5; }
+
+  /* GRID */
+  .concierge-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 8vw; }
+  .c-section-label { font-size: 10px; font-weight: 900; letter-spacing: 2px; color: #ccc; margin-bottom: 50px; text-transform: uppercase; }
+
+  /* FORM STYLES */
+  .c-field { margin-bottom: 35px; border-bottom: 1px solid var(--c-border); padding-bottom: 10px; transition: border-color 0.3s; }
+  .c-field:focus-within { border-color: #000; }
+  .c-field label { display: block; font-size: 9px; font-weight: 900; letter-spacing: 1px; color: var(--c-grey); margin-bottom: 10px; }
+  .c-field input, .c-field select, .c-field textarea { 
+    width: 100%; background: transparent; border: none; outline: none; 
+    font-size: 14px; font-weight: 600; padding: 5px 0; color: #000; font-family: inherit;
+    -webkit-appearance: none; border-radius: 0;
+  }
+  .c-field textarea { resize: vertical; min-height: 40px; }
+  .c-field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+
+  .c-submit-btn { 
+    width: 100%; background: #000; color: #fff; border: none; padding: 22px; 
+    font-size: 11px; font-weight: 900; letter-spacing: 2px; cursor: pointer; transition: 0.4s;
+    text-transform: uppercase; margin-top: 20px;
+  }
+  .c-submit-btn:hover { background: #333; transform: translateY(-2px); }
+  
+  .c-success-banner { background: #f4f4f4; padding: 20px; margin-bottom: 40px; border-left: 3px solid #52b788; }
+  .c-success-banner p { margin: 0; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #000; }
+
+  /* ACCORDION */
+  .c-acc-item { border-bottom: 1px solid var(--c-border); }
+  .c-acc-trigger { 
+    display: flex; justify-content: space-between; align-items: center; 
+    padding: 25px 0; cursor: pointer; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;
+  }
+  .c-acc-content { height: 0; overflow: hidden; font-size: 13px; color: #666; line-height: 1.6; font-weight: 500; transition: height 0.4s ease; }
+  .c-acc-content p { padding-bottom: 25px; margin: 0; }
+
+  /* DIRECT DATA */
+  .c-direct-data { margin-top: 60px; }
+  .c-data-row { display: flex; justify-content: space-between; border-bottom: 1px solid var(--c-border); padding: 15px 0; font-size: 10px; letter-spacing: 1px; }
+  .c-data-row span { font-weight: 900; color: #aaa; }
+  .c-data-row a { color: #000; text-decoration: none; font-weight: 800; }
+
+  /* DIAL ANCHOR */
+  .concierge-dial-anchor { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 100; }
+  .pod-morph-container { width: 60px; height: 60px; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 15px 30px rgba(0,0,0,0.15); transition: 0.3s; }
+  .pod-morph-container:hover { transform: scale(1.05); }
+
+  @media screen and (max-width: 1024px) {
+    .concierge-grid { grid-template-columns: 1fr; gap: 80px; }
+    .c-field-group { grid-template-columns: 1fr; gap: 0; }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Sleek Accordion Logic
+    const accItems = document.querySelectorAll('.c-acc-item');
+    accItems.forEach(item => {
+      const trigger = item.querySelector('.c-acc-trigger');
+      const content = item.querySelector('.c-acc-content');
+      const icon = item.querySelector('.c-icon');
+      
+      trigger.onclick = () => {
+        const isOpen = item.classList.contains('is-open');
+        
+        // Close all others
+        accItems.forEach(i => {
+           i.classList.remove('is-open');
+           i.querySelector('.c-icon').innerText = '+';
+           gsap.to(i.querySelector('.c-acc-content'), { height: 0, duration: 0.4, ease: "power2.out" });
+        });
+
+        // Open clicked
+        if(!isOpen) {
+          item.classList.add('is-open');
+          icon.innerText = '−';
+          gsap.set(content, { height: "auto" });
+          const targetHeight = content.offsetHeight;
+          gsap.fromTo(content, { height: 0 }, { height: targetHeight, duration: 0.4, ease: "power2.out" });
+        }
+      };
+    });
+
+    // 2. High-End GSAP Reveals
+    if(typeof gsap !== 'undefined') {
+       gsap.from('.concierge-header > *', { opacity: 0, y: 30, stagger: 0.1, duration: 1, ease: 'power3.out' });
+       gsap.from('.c-field', { opacity: 0, y: 20, stagger: 0.05, duration: 0.8, delay: 0.3, ease: 'power2.out' });
+       gsap.from('.reveal-item', { opacity: 0, x: -20, stagger: 0.1, duration: 1, delay: 0.5, ease: 'power3.out' });
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Maison Concierge",
+  "settings": [],
+  "presets": [{"name": "Maison Concierge"}]
+}
+{% endschema %}

@@ -1,0 +1,281 @@
+<div class="alaia-hero-container" id="alaia-hero-{{ section.id }}">
+
+  <div class="alaia-hero-video">
+    <video id="alaia-bg-video-{{ section.id }}" autoplay muted loop playsinline class="video-fade-in">
+      <source src="https://cdn.shopify.com/videos/c/o/v/3c283d81387d42c2ba3b79a4798312cc.mp4" type="video/mp4">
+    </video>
+  </div>
+  
+  <div class="alaia-hero-content">
+    <h1 class="alaia-logo-text">DEVIL</h1>
+    
+    <div class="alaia-hero-bottom-bar">
+      <div class="video-controls">
+        <button id="alaia-play-pause-{{ section.id }}" class="vid-btn">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <button id="alaia-mute-unmute-{{ section.id }}" class="vid-btn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+        </button>
+      </div>
+
+      <div class="alaia-hero-footer">
+         <span class="alaia-discover-link" style="cursor: default;">
+           <span class="play-icon">▶</span> Discover The Latest Arrivals
+         </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  #alaia-hero-{{ section.id }} {
+    --pillar-width: 2vw; 
+    
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    background-color: #000;
+    overflow: hidden;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+
+  #alaia-hero-{{ section.id }}::before,
+  #alaia-hero-{{ section.id }}::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: var(--pillar-width);
+    background-color: #000;
+    z-index: 5; 
+  }
+  #alaia-hero-{{ section.id }}::before { left: 0; }
+  #alaia-hero-{{ section.id }}::after { right: 0; }
+
+  #alaia-hero-{{ section.id }} .alaia-hero-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background-color: #000;
+  }
+
+  #alaia-hero-{{ section.id }} .alaia-hero-video video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.7);
+    transform: scale(1.02); 
+    opacity: 0;
+    animation: fadeInVideo 1.5s ease forwards;
+  }
+
+  @keyframes fadeInVideo {
+    to { opacity: 1; }
+  }
+
+  #alaia-hero-{{ section.id }} .alaia-hero-content {
+    position: relative;
+    z-index: 10;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #alaia-hero-{{ section.id }} .alaia-logo-text {
+    color: #D31224; 
+    font-size: clamp(4rem, 20vw, 22rem); 
+    font-family: "Times New Roman", Times, serif; 
+    font-weight: 400;
+    letter-spacing: 0.05em; 
+    margin: 0;
+    line-height: 0.9;
+    pointer-events: none;
+    max-width: 90vw; 
+    text-align: center;
+  }
+
+  #alaia-hero-{{ section.id }} .alaia-hero-bottom-bar {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 var(--pillar-width); 
+    box-sizing: border-box;
+  }
+
+  #alaia-hero-{{ section.id }} .video-controls {
+    position: absolute;
+    left: var(--pillar-width); 
+    display: flex;
+    gap: 20px;
+  }
+
+  #alaia-hero-{{ section.id }} .vid-btn {
+    position: relative;
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+    
+    /* Hardware acceleration & snappy transitions */
+    transform: translateZ(0);
+    will-change: transform, opacity;
+    transition: opacity 0.3s ease, transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+    
+    /* Eradicate native mobile tap highlights */
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  
+  /* CRITICAL MOBILE FIX: Invisible 44x44 hit areas for fat fingers */
+  #alaia-hero-{{ section.id }} .vid-btn::after {
+    content: '';
+    position: absolute;
+    inset: -15px; 
+  }
+
+  #alaia-hero-{{ section.id }} .alaia-discover-link {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid #ffffff;
+    padding-bottom: 4px;
+    text-transform: uppercase;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  #alaia-hero-{{ section.id }} .play-icon {
+    font-size: 9px;
+    margin-right: 5px;
+  }
+
+  /* --- DESKTOP INTERACTION --- */
+  @media (hover: hover) and (pointer: fine) {
+    #alaia-hero-{{ section.id }} .vid-btn:hover {
+      opacity: 1;
+      transform: scale(1.1) translateZ(0);
+    }
+  }
+
+  /* --- MOBILE INTERACTION (Tactile Feedback) --- */
+  @media (hover: none) and (pointer: coarse) {
+    #alaia-hero-{{ section.id }} .vid-btn:active {
+      opacity: 1;
+      transform: scale(0.85) translateZ(0); /* Satisfying depress effect */
+      transition: transform 0.1s ease, opacity 0.1s ease;
+    }
+  }
+
+  /* --- MOBILE LAYOUT OPTIMIZATIONS --- */
+  @media screen and (max-width: 768px) {
+    
+    #alaia-hero-{{ section.id }}::before,
+    #alaia-hero-{{ section.id }}::after {
+      display: none;
+    }
+
+    #alaia-hero-{{ section.id }} .alaia-logo-text {
+      /* Replaced pure vw with clamp for safety on extremely thin screens */
+      font-size: clamp(4rem, 25vw, 10rem); 
+      letter-spacing: 0.02em;
+    }
+
+    #alaia-hero-{{ section.id }} .alaia-hero-bottom-bar {
+      padding: 0 20px; 
+      /* Respects iOS Home Indicator / Android Nav Bar */
+      bottom: calc(25px + env(safe-area-inset-bottom));
+      flex-direction: column; 
+      gap: 24px;
+    }
+
+    #alaia-hero-{{ section.id }} .video-controls {
+      position: static;
+      order: 2; 
+      gap: 40px; /* Wider gap to prevent mis-taps */
+      margin-top: 5px;
+    }
+
+    #alaia-hero-{{ section.id }} .alaia-hero-footer {
+      order: 1;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    
+    const video = document.getElementById('alaia-bg-video-{{ section.id }}');
+    const playPauseBtn = document.getElementById('alaia-play-pause-{{ section.id }}');
+    const muteUnmuteBtn = document.getElementById('alaia-mute-unmute-{{ section.id }}');
+
+    if(!video || !playPauseBtn || !muteUnmuteBtn) return;
+
+    const playPath = "M8 5v14l11-7z";
+    const pausePath = "M6 19h4V5H6v14zm8-14v14h4V5h-4z";
+    const mutePath = "M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z";
+    const unmutePath = "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z";
+
+    // Re-trigger play on first interaction (iOS low-power mode fallback)
+    document.body.addEventListener('touchstart', function() {
+       if (video.paused && !video.hasAttribute('data-user-paused')) {
+           video.play().catch(() => {});
+       }
+    }, { once: true, passive: true });
+
+    playPauseBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (video.paused) {
+        video.play();
+        video.removeAttribute('data-user-paused');
+        playPauseBtn.querySelector('path').setAttribute('d', pausePath);
+      } else {
+        video.pause();
+        video.setAttribute('data-user-paused', 'true');
+        playPauseBtn.querySelector('path').setAttribute('d', playPath);
+      }
+    });
+
+    muteUnmuteBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (video.muted) {
+        video.muted = false;
+        muteUnmuteBtn.querySelector('path').setAttribute('d', unmutePath);
+      } else {
+        video.muted = true;
+        muteUnmuteBtn.querySelector('path').setAttribute('d', mutePath);
+      }
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Alaia Hero Video",
+  "tag": "section",
+  "class": "section",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Alaia Hero Video",
+      "category": "Video"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,148 @@
+<div class="dd-maison-collection" id="collection-{{ collection.id }}">
+  
+  <div class="maison-header">
+    <div class="maison-meta">
+       <span class="m-badge">COLLECTION 2026</span>
+       <span class="m-count">{{ collection.all_products_count }} ARTIFACTS</span>
+    </div>
+    <h1 class="maison-title">{{ collection.title | upcase }}</h1>
+    <div class="maison-filter-bar">
+       <span class="f-label">SORT BY:</span>
+       <span class="f-active">NEWEST ENTRIES</span>
+    </div>
+  </div>
+
+  <div class="maison-grid">
+    {% paginate collection.products by 24 %}
+      {% for product in collection.products %}
+        <a href="{{ product.url }}" class="maison-card reveal-card">
+          <div class="m-card-image">
+            <img src="{{ product.featured_image | image_url: width: 1000 }}" 
+                 alt="{{ product.title }}" 
+                 class="m-primary-img"
+                 loading="lazy">
+            
+            {% if product.images[1] != blank %}
+              <img src="{{ product.images[1] | image_url: width: 1000 }}" 
+                   alt="{{ product.title }}" 
+                   class="m-hover-img"
+                   loading="lazy">
+            {% endif %}
+            
+            {% unless product.available %}
+              <div class="m-sold-out">ARCHIVED</div>
+            {% endunless %}
+          </div>
+          
+          <div class="m-card-info">
+            <div class="m-info-left">
+              <h3 class="m-product-name">{{ product.title | upcase }}</h3>
+              <span class="m-ref">REF. {{ product.id | slice: -5, 5 }}</span>
+            </div>
+            <p class="m-product-price">{{ product.price | money }}</p>
+          </div>
+        </a>
+      {% endfor %}
+      
+      {% if paginate.pages > 1 %}
+        <div class="maison-pagination">
+          {{ paginate | default_pagination: next: 'NEXT', previous: 'PREV' }}
+        </div>
+      {% endif %}
+    {% endpaginate %}
+  </div>
+
+  <div class="maison-dial-anchor">
+     <div class="pod-morph-container" onclick="window.location.href='/'">
+        <div class="pod-spin-bg"><div class="pod-dent"></div></div>
+        <div class="pod-center"><div class="center-symbol"></div></div>
+     </div>
+  </div>
+
+</div>
+
+<style>
+  :root { --m-white: #ffffff; --m-black: #000000; --m-grey: #f4f4f4; --m-border: #eeeeee; }
+  
+  .dd-maison-collection { background: var(--m-white); color: var(--m-black); font-family: 'Helvetica Neue', Helvetica, sans-serif; padding-bottom: 150px; }
+
+  /* HEADER */
+  .maison-header { padding: 120px 5vw 60px 5vw; border-bottom: 1px solid var(--m-border); text-align: center; }
+  .maison-meta { display: flex; justify-content: center; gap: 20px; font-size: 10px; font-weight: 800; letter-spacing: 2px; color: #999; margin-bottom: 20px; }
+  .maison-title { font-size: clamp(3rem, 10vw, 8rem); font-weight: 900; letter-spacing: -3px; line-height: 0.85; margin: 0; }
+  .maison-filter-bar { margin-top: 40px; font-size: 10px; font-weight: 900; letter-spacing: 1px; color: #555; }
+  .f-active { color: #000; border-bottom: 1px solid #000; padding-bottom: 2px; margin-left: 10px; }
+
+  /* GRID ALIGNMENT */
+  .maison-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--m-border); border-bottom: 1px solid var(--m-border); }
+  
+  /* CARD STYLING */
+  .maison-card { background: var(--m-white); text-decoration: none; color: inherit; padding: 60px 40px; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); position: relative; display: flex; flex-direction: column; }
+  .maison-card:hover { background: #fafafa; }
+
+  .m-card-image { position: relative; aspect-ratio: 3/4; overflow: hidden; margin-bottom: 40px; flex-grow: 1; display: flex; align-items: center; justify-content: center; }
+  .m-card-image img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; }
+  
+  .m-hover-img { position: absolute; inset: 0; opacity: 0; }
+  .maison-card:hover .m-primary-img { opacity: 0; transform: scale(1.05); }
+  .maison-card:hover .m-hover-img { opacity: 1; transform: scale(1.05); }
+
+  .m-sold-out { position: absolute; top: 0; right: 0; font-size: 9px; font-weight: 900; background: #000; color: #fff; padding: 4px 10px; }
+
+  /* PRODUCT INFO */
+  .m-card-info { display: flex; justify-content: space-between; align-items: flex-start; margin-top: auto; }
+  .m-product-name { font-size: 13px; font-weight: 900; margin: 0; letter-spacing: -0.2px; text-transform: uppercase; }
+  .m-ref { font-size: 9px; font-weight: 700; color: #aaa; margin-top: 5px; display: block; }
+  .m-product-price { font-family: monospace; font-size: 13px; font-weight: 600; margin: 0; }
+
+  /* PAGINATION */
+  .maison-pagination { grid-column: 1 / -1; background: var(--m-white); padding: 60px 0; text-align: center; font-size: 11px; font-weight: 800; letter-spacing: 1px; }
+  .maison-pagination a, .maison-pagination span { padding: 10px 15px; color: #888; text-decoration: none; transition: 0.3s; }
+  .maison-pagination a:hover { color: #000; }
+  .maison-pagination .current { color: #000; border-bottom: 2px solid #000; pointer-events: none; }
+
+  /* DIAL ANCHOR */
+  .maison-dial-anchor { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 100; }
+  .pod-morph-container { width: 60px; height: 60px; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 20px 40px rgba(0,0,0,0.2); transition: transform 0.3s ease; }
+  .pod-morph-container:hover { transform: scale(1.05); }
+  .pod-center { width: 20px; height: 20px; border: 1px solid #333; border-radius: 50%; background: transparent; }
+
+  @media screen and (max-width: 1024px) { 
+    .maison-grid { grid-template-columns: repeat(2, 1fr); } 
+  }
+  @media screen and (max-width: 768px) { 
+    .maison-header { padding: 100px 5vw 40px 5vw; }
+    .maison-grid { grid-template-columns: repeat(1, 1fr); } 
+    .maison-card { padding: 40px 25px; }
+    .maison-title { letter-spacing: -1px; }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Elegant entrance animation for the collection grid
+    if(typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+      gsap.from('.maison-header > *', { opacity: 0, y: 30, stagger: 0.1, duration: 1, ease: 'power3.out' });
+      
+      gsap.from('.reveal-card', {
+        opacity: 0,
+        y: 60,
+        stagger: 0.1,
+        duration: 1.2,
+        ease: "expo.out",
+        scrollTrigger: {
+          trigger: '.maison-grid',
+          start: "top 85%"
+        }
+      });
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Maison Collection Grid",
+  "settings": [],
+  "presets": [{"name": "Maison Collection Grid"}]
+}
+{% endschema %}

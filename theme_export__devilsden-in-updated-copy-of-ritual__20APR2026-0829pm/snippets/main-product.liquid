@@ -1,0 +1,22 @@
+<div class="product-pdp-container">
+  <div class="pdp-media-gallery">
+    {% for media in product.media %}
+      <div class="pdp-media-item" data-speed="0.2">
+        {{ media | image_url: width: 1500 | image_tag: class: 'pdp-floating-img' }}
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="pdp-info-sidebar">
+    <div class="pdp-info-content">
+      <h1 class="pdp-title">{{ product.title }}</h1>
+      <div class="pdp-price">{{ product.price | money }}</div>
+      
+      <div class="pdp-description">
+        {{ product.description }}
+      </div>
+
+      {% render 'product-form', product: product %}
+    </div>
+  </div>
+</div>

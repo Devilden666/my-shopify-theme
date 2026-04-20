@@ -1,0 +1,165 @@
+<div class="dd-alaia-engine" id="product-{{ product.id }}">
+  <div class="alaia-container">
+    
+    <div class="alaia-gallery">
+      {% for image in product.images %}
+        <div class="alaia-image-wrap reveal-image">
+          <img src="{{ image | image_url: width: 1200 }}" alt="{{ product.title }}" loading="lazy">
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="alaia-info-sticky">
+      <div class="alaia-header">
+         <div class="alaia-meta">
+            <span class="m-archive-code">REF. {{ product.id | slice: -6, 6 }}</span>
+            <span class="m-collection">{{ collection.title | default: 'PERMANENT COLLECTION' | upcase }}</span>
+         </div>
+         <h1 class="alaia-title">{{ product.title | upcase }}</h1>
+         <p class="alaia-price">{{ product.price | money }}</p>
+      </div>
+
+      <div class="alaia-description">
+        {{ product.description }}
+      </div>
+
+      <div class="alaia-controls">
+        {% form 'product', product, id: "alaia-form" %}
+          <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+          
+          <div class="alaia-selector-group">
+            <label class="alaia-label">SELECT MEASURE</label>
+            <div class="alaia-size-grid">
+              {% for variant in product.variants %}
+                <div class="alaia-size-item {% if variant.available == false %}is-sold-out{% endif %}" 
+                     data-id="{{ variant.id }}">
+                  {{ variant.title }}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <button type="submit" class="alaia-btn-primary" {% unless product.available %}disabled{% endunless %}>
+            {% if product.available %}
+              ADD TO ARCHIVE
+            {% else %}
+              OUT OF STOCK
+            {% endif %}
+          </button>
+        {% endform %}
+      </div>
+
+      <div class="alaia-utilities">
+        <a href="#" class="u-link">Product Details +</a>
+        <a href="#" class="u-link">Shipping & Returns +</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  :root { --a-bg: #ffffff; --a-text: #000; --a-grey: #f9f9f9; --a-border: #e8e8e8; }
+  
+  .dd-alaia-engine { background: var(--a-bg); color: var(--a-text); font-family: 'Helvetica Neue', Helvetica, sans-serif; }
+  .alaia-container { display: flex; min-height: 100vh; }
+
+  /* LEFT GALLERY */
+  .alaia-gallery { width: 65%; background: var(--a-grey); }
+  .alaia-image-wrap { width: 100%; display: flex; justify-content: center; align-items: center; padding: 2vh 0; }
+  .alaia-image-wrap img { width: 85%; height: auto; object-fit: contain; mix-blend-mode: multiply; }
+
+  /* RIGHT INFO STICKY */
+  .alaia-info-sticky { 
+    width: 35%; height: 100vh; position: sticky; top: 0; 
+    padding: 80px 60px; display: flex; flex-direction: column; 
+    border-left: 1px solid var(--a-border); background: #fff;
+  }
+
+  .alaia-meta { display: flex; justify-content: space-between; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: #888; margin-bottom: 15px; }
+  .alaia-title { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; margin: 0 0 10px 0; }
+  .alaia-price { font-family: monospace; font-size: 14px; font-weight: 600; }
+
+  .alaia-description { margin: 40px 0; font-size: 13px; line-height: 1.6; color: #444; max-width: 400px; }
+
+  /* SIZE SELECTOR */
+  .alaia-label { font-size: 9px; font-weight: 800; letter-spacing: 1px; color: #aaa; display: block; margin-bottom: 15px; }
+  .alaia-size-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 40px; }
+  .alaia-size-item { 
+    border: 1px solid var(--a-border); padding: 12px 0; text-align: center; 
+    font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.3s; 
+  }
+  .alaia-size-item:hover { border-color: #000; }
+  .alaia-size-item.is-selected { background: #000; color: #fff; border-color: #000; }
+  .alaia-size-item.is-sold-out { opacity: 0.3; text-decoration: line-through; cursor: not-allowed; }
+
+  /* BUTTON */
+  .alaia-btn-primary { 
+    width: 100%; background: #000; color: #fff; border: none; 
+    padding: 22px; font-size: 12px; font-weight: 800; letter-spacing: 2px; 
+    cursor: pointer; transition: 0.4s; 
+  }
+  .alaia-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+
+  .alaia-utilities { margin-top: auto; border-top: 1px solid var(--a-border); padding-top: 30px; display: flex; flex-direction: column; gap: 15px; }
+  .u-link { text-decoration: none; color: #000; font-size: 11px; font-weight: 700; }
+
+  @media screen and (max-width: 1024px) {
+    .alaia-container { flex-direction: column; }
+    .alaia-gallery { width: 100%; }
+    .alaia-info-sticky { width: 100%; height: auto; position: static; padding: 40px 25px; }
+  }
+</style>
+
+<script>
+const runAlaiaEngine = () => {
+  const container = document.querySelector('#product-{{ product.id }}');
+  if(!container || !window.gsap) return;
+
+  // 1. SIZE SELECTOR LOGIC
+  const sizeItems = container.querySelectorAll('.alaia-size-item');
+  const hiddenInput = container.querySelector('input[name="id"]');
+
+  sizeItems.forEach(item => {
+    item.onclick = () => {
+      if(item.classList.contains('is-sold-out')) return;
+      sizeItems.forEach(s => s.classList.remove('is-selected'));
+      item.classList.add('is-selected');
+      hiddenInput.value = item.dataset.id;
+    };
+  });
+
+  // 2. KINETIC IMAGE REVEAL
+  gsap.from('.reveal-image img', {
+    opacity: 0,
+    y: 50,
+    stagger: 0.2,
+    duration: 1.2,
+    ease: "expo.out",
+    scrollTrigger: {
+      trigger: '.alaia-gallery',
+      start: "top 80%"
+    }
+  });
+
+  // 3. STICKY UI ENTRANCE
+  gsap.from('.alaia-info-sticky > *', {
+    opacity: 0,
+    x: 30,
+    stagger: 0.1,
+    duration: 1,
+    delay: 0.5,
+    ease: "power3.out"
+  });
+};
+
+document.addEventListener('DOMContentLoaded', runAlaiaEngine);
+</script>
+
+{% schema %}
+{
+  "name": "Alaia Product Master",
+  "settings": [],
+  "presets": [{"name": "Alaia Product Master"}]
+}
+{% endschema %}

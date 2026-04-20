@@ -1,0 +1,440 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+
+<style>
+  .dd-portal-wrapper {
+    width: 100vw;
+    min-height: 100vh;
+    background-color: #ffffff;
+    color: #000000;
+    display: flex;
+    flex-wrap: wrap;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    padding-top: 80px; 
+  }
+
+  /* LEFT SIDE: HOW IT WORKS */
+  .dd-portal-manifesto {
+    flex: 1 1 45%;
+    padding: 6vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: #f6f6f6;
+    border-right: 1px solid #e0e0e0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dd-manifesto-title {
+    font-family: "Times New Roman", Times, serif;
+    font-size: clamp(3rem, 5vw, 6rem);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: -2px;
+    margin: 0 0 20px 0;
+    line-height: 0.85;
+  }
+
+  .dd-manifesto-desc {
+    font-size: 13px;
+    font-weight: 500;
+    color: #555555;
+    line-height: 1.6;
+    margin-bottom: 50px;
+    max-width: 420px;
+  }
+
+  .dd-process-list { display: flex; flex-direction: column; gap: 30px; }
+  
+  /* OPTIMIZATION: Hardware acceleration for smoother mobile GSAP */
+  .dd-process-step { 
+    display: flex; 
+    align-items: flex-start; 
+    gap: 15px; 
+    opacity: 0; 
+    transform: translateY(20px); 
+    will-change: transform, opacity; 
+  }
+  
+  .dd-step-num { 
+    font-family: monospace; font-size: 11px; font-weight: 900; 
+    color: #000000; border: 1px solid #cccccc; padding: 6px 10px; border-radius: 4px; background: #ffffff;
+  }
+  
+  .dd-step-text h4 { margin: 0 0 8px 0; font-size: 13px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
+  .dd-step-text p { margin: 0; font-size: 12px; color: #666666; line-height: 1.5; }
+
+  /* RIGHT SIDE: THE FORM */
+  .dd-portal-form-container {
+    flex: 1 1 55%;
+    padding: 6vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #ffffff;
+  }
+
+  /* OPTIMIZATION: Added initial hidden state so GSAP stagger works flawlessly without FOUC */
+  .dd-form-section-title {
+    font-size: 10px;
+    font-weight: 900;
+    color: #888888;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 40px 0 20px 0;
+    border-bottom: 1px solid #eeeeee;
+    padding-bottom: 10px;
+    opacity: 0; 
+    transform: translateY(10px);
+    will-change: transform, opacity;
+  }
+
+  .dd-form-section-title:first-child { margin-top: 0; }
+
+  .dd-form-group { margin-bottom: 25px; position: relative; opacity: 0; transform: translateY(15px); will-change: transform, opacity; }
+  .dd-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  .dd-input, .dd-select, .dd-textarea {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    padding: 18px 20px;
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    font-size: 12px;
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    outline: none;
+    border-radius: 4px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    box-sizing: border-box;
+  }
+
+  .dd-input:focus, .dd-select:focus, .dd-textarea:focus { 
+    border-color: #000000; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  }
+  
+  .dd-input::placeholder, .dd-textarea::placeholder { color: #aaaaaa; text-transform: uppercase; font-size: 10px; font-weight: 900; letter-spacing: 1px; -webkit-text-fill-color: #aaaaaa !important; }
+  .dd-select { color: #555555; text-transform: uppercase; font-weight: 900; font-size: 10px; letter-spacing: 1px; appearance: none; cursor: pointer; }
+  .dd-textarea { min-height: 100px; resize: vertical; }
+
+  /* LIVE PAYOUT CALCULATOR */
+  .dd-calculator-box { background: #f9f9f9; border: 1px solid #eeeeee; border-radius: 4px; padding: 20px; margin-top: 10px; }
+  .calc-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 10px; color: #666; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;}
+  .calc-row.total { color: #000000; font-size: 14px; border-top: 1px solid #dddddd; padding-top: 10px; margin-bottom: 0; }
+  .calc-val { font-family: monospace; font-size: 13px; color: #000000; }
+  .calc-row.total .calc-val { font-size: 16px; font-weight: bold; }
+
+  /* CUSTOM FILE UPLOAD ENGINE */
+  .dd-file-upload-wrapper { position: relative; width: 100%; border: 1px dashed #cccccc; background: #fafafa; padding: 40px 20px; text-align: center; border-radius: 4px; transition: 0.3s; cursor: pointer; }
+  .dd-file-upload-wrapper:hover { background: #f0f0f0; border-color: #000000; }
+  .dd-file-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
+  .dd-file-label { font-size: 12px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #000000; pointer-events: none; display: block; margin-bottom: 5px; }
+  .dd-file-desc { display: block; font-family: 'Helvetica Neue', sans-serif; font-size: 11px; color: #666666; line-height: 1.4; }
+  .dd-image-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; }
+  .dd-preview-thumb { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
+
+  /* LEGAL CHECKBOX & BUTTON */
+  .dd-legal-check { display: flex; align-items: flex-start; gap: 15px; margin: 30px 0; }
+  .dd-legal-check input[type="checkbox"] { margin-top: 2px; width: 16px; height: 16px; accent-color: #000; cursor: pointer;}
+  .dd-legal-check label { font-size: 11px; color: #555; line-height: 1.5; font-weight: 600; cursor: pointer; }
+  .dd-submit-btn { width: 100%; background: #000000; color: #ffffff; border: none; padding: 22px; font-size: 13px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 4px; transition: 0.3s; }
+  .dd-submit-btn:hover { background: #333333; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+  .dd-submit-btn:disabled { background: #888888; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  @media screen and (max-width: 900px) {
+    .dd-portal-manifesto, .dd-portal-form-container { flex: 1 1 100%; border-right: none; }
+    .dd-portal-manifesto { border-bottom: 1px solid #eeeeee; padding-bottom: 10vw; }
+    .dd-form-row { grid-template-columns: 1fr; gap: 0; }
+  }
+</style>
+
+<div class="dd-portal-wrapper">
+  
+  <div class="dd-portal-manifesto">
+    <h1 class="dd-manifesto-title">Thrift With Us</h1>
+    <p class="dd-manifesto-desc">Want to sell your clothes on Devil's Den? Send us your items, and we will take care of the photos, listings, shipping to the buyer, and making sure you get paid.</p>
+
+    <div class="dd-process-list">
+      <div class="dd-process-step"><span class="dd-step-num">01</span><div class="dd-step-text"><h4>Submit Your Item</h4><p>Fill out the form with clear photos, the item's condition, and the price you want to sell it for.</p></div></div>
+      <div class="dd-process-step"><span class="dd-step-num">02</span><div class="dd-step-text"><h4>We Pick It Up</h4><p>If your item fits our store, we will schedule a pickup from your address to check its quality and make sure it's authentic.</p></div></div>
+      <div class="dd-process-step"><span class="dd-step-num">03</span><div class="dd-step-text"><h4>We Sell It</h4><p>We take professional photos and list your item on our website so our customers can buy it.</p></div></div>
+      <div class="dd-process-step"><span class="dd-step-num">04</span><div class="dd-step-text"><h4>You Get Paid</h4><p>Once the item sells, we handle the shipping. You get your money immediately (minus our 15% selling fee).</p></div></div>
+    </div>
+  </div>
+
+  <div class="dd-portal-form-container">
+    <form id="dd-consign-form">
+      
+      <div class="dd-form-section-title">01. Your Contact Info</div>
+      <div class="dd-form-group dd-form-row">
+        <input type="text" id="dd-name" class="dd-input" placeholder="Full Name" required>
+        <input type="email" id="dd-email" class="dd-input" value="{{ customer.email }}" placeholder="Email Address" required {% if customer %}readonly{% endif %}>
+      </div>
+      <div class="dd-form-group dd-form-row">
+        <input type="text" id="dd-phone" class="dd-input" placeholder="Phone Number" required>
+        <input type="text" id="dd-city" class="dd-input" placeholder="Pickup City / Pincode" required>
+      </div>
+
+      <div class="dd-form-section-title">02. Item Details</div>
+      <div class="dd-form-group">
+        <input type="text" id="dd-brand" class="dd-input" placeholder="Brand (e.g., Stussy, Nike, Carhartt)" required>
+      </div>
+      <div class="dd-form-group">
+        <input type="text" id="dd-item-name" class="dd-input" placeholder="Item Name (e.g., Black Zip-Up Hoodie)" required>
+      </div>
+      <div class="dd-form-group dd-form-row">
+        <select id="dd-category" class="dd-select" required>
+          <option value="" disabled selected>Category</option>
+          <option value="Clothing">Clothing</option>
+          <option value="Shoes">Shoes</option>
+          <option value="Accessories">Accessories</option>
+        </select>
+        <input type="text" id="dd-size" class="dd-input" placeholder="Size on Tag (e.g., Medium, US 10)" required>
+      </div>
+      <div class="dd-form-group dd-form-row">
+        <input type="text" id="dd-measurements" class="dd-input" placeholder="Measurements (e.g., Length 28in, Pit 22in)">
+        <select id="dd-condition" class="dd-select" required>
+          <option value="" disabled selected>Condition</option>
+          <option value="New">Brand New (With Tags)</option>
+          <option value="Like New">Like New (Worn Once)</option>
+          <option value="Good">Good (Light Wear, No Flaws)</option>
+          <option value="Used">Used (Has visible wear/flaws)</option>
+        </select>
+      </div>
+      <div class="dd-form-group">
+        <textarea id="dd-flaws" class="dd-textarea" placeholder="Please describe any stains, holes, or damage. If there are no flaws, type 'None'." required></textarea>
+      </div>
+
+      <div class="dd-form-section-title">03. Pricing & Photos</div>
+      <div class="dd-form-group">
+        <input type="number" id="dd-price-input" class="dd-input" placeholder="How much do you want to sell this for? (₹)" required>
+        <div class="dd-calculator-box">
+           <div class="calc-row"><span>Selling Price</span> <span class="calc-val" id="calc-sale">₹0</span></div>
+           <div class="calc-row"><span>Our Selling Fee (15%)</span> <span class="calc-val" id="calc-fee">-₹0</span></div>
+           <div class="calc-row total"><span>What You Keep</span> <span class="calc-val" id="calc-payout">₹0</span></div>
+        </div>
+      </div>
+      <div class="dd-form-group">
+        <div class="dd-file-upload-wrapper" id="dd-dropzone">
+          <input type="file" class="dd-file-input" id="dd-file-upload" accept="image/*" multiple required>
+          <span class="dd-file-label">CLICK HERE TO UPLOAD PHOTOS</span>
+          <span class="dd-file-desc" id="dd-file-status">Please include photos of the front, back, size tag, and any flaws.</span>
+        </div>
+        <div class="dd-image-preview-grid" id="dd-image-preview"></div>
+      </div>
+
+      <div class="dd-legal-check">
+         <input type="checkbox" id="legal-agreement" required>
+         <label for="legal-agreement">I confirm this item is real and I have described it honestly.</label>
+      </div>
+      <div class="dd-form-group">
+        <button type="submit" class="dd-submit-btn" id="dd-submit-btn">Submit to Vault</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+{% unless request.design_mode %}
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- SUPABASE SETUP ---
+    const supabaseUrl = 'https://orvqtdhcsmxqmhnakolj.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ydnF0ZGhjc214cW1obmFrb2xqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNjU3MzAsImV4cCI6MjA4ODc0MTczMH0.5s7DWkriiqzxKx2slcZl_9kLWmp9s8LSpLUVYasYefg';
+    
+    // --- LIVE PAYOUT CALCULATOR (Optimized formatting) ---
+    const priceInput = document.getElementById('dd-price-input');
+    const calcSale = document.getElementById('calc-sale');
+    const calcFee = document.getElementById('calc-fee');
+    const calcPayout = document.getElementById('calc-payout');
+    
+    if(priceInput) {
+       const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+       priceInput.addEventListener('input', (e) => {
+          let price = parseFloat(e.target.value) || 0;
+          let fee = price * 0.15;
+          calcSale.innerText = formatter.format(price);
+          calcFee.innerText = "-" + formatter.format(fee);
+          calcPayout.innerText = formatter.format(price - fee);
+       });
+    }
+
+    // --- FILE PREVIEW LOGIC ---
+    const fileInput = document.getElementById('dd-file-upload');
+    if(fileInput) {
+      fileInput.addEventListener('change', function() {
+        const previewGrid = document.getElementById('dd-image-preview');
+        const fileStatus = document.getElementById('dd-file-status');
+        previewGrid.innerHTML = ''; 
+        if(this.files && this.files.length > 0) {
+          fileStatus.innerHTML = `<strong>${this.files.length} Photos Attached.</strong>`;
+          fileStatus.style.color = "#16a34a";
+          Array.from(this.files).forEach(file => {
+             if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                   const img = document.createElement('img');
+                   img.src = e.target.result;
+                   img.className = 'dd-preview-thumb';
+                   previewGrid.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+             }
+          });
+        }
+      });
+    }
+
+    // --- SUPABASE SUBMISSION (TEXT + IMAGES) ---
+    if (window.supabase) {
+      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+      document.getElementById('dd-consign-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const btn = document.getElementById('dd-submit-btn');
+        btn.innerText = 'UPLOADING IMAGES... (PLEASE WAIT)';
+        btn.disabled = true; // Use standard disabled attribute for safety
+
+        // OPTIMIZATION: Cache DOM values immediately to save browser processing time
+        const valName = document.getElementById('dd-name').value;
+        const valEmail = document.getElementById('dd-email').value;
+        const valPhone = document.getElementById('dd-phone').value;
+        const valCity = document.getElementById('dd-city').value;
+        const valBrand = document.getElementById('dd-brand').value;
+        const valItemName = document.getElementById('dd-item-name').value;
+        const valCat = document.getElementById('dd-category').value;
+        const valSize = document.getElementById('dd-size').value;
+        const valCond = document.getElementById('dd-condition').value;
+        const valFlaws = document.getElementById('dd-flaws').value;
+        const valMeas = document.getElementById('dd-measurements').value;
+        const valPrice = document.getElementById('dd-price-input').value;
+        const files = fileInput.files;
+
+        let uploadedImageUrls = [];
+
+        // 1. OPTIMIZED: UPLOAD IMAGES CONCURRENTLY (Parallel mapping instead of sequential loop)
+        if (files.length > 0) {
+          try {
+            const uploadPromises = Array.from(files).map(async (file) => {
+              const fileExt = file.name.split('.').pop();
+              const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
+
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('consignments')
+                .upload(fileName, file);
+
+              if (uploadError) throw new Error(uploadError.message);
+
+              const { data: publicUrlData } = supabase.storage
+                .from('consignments')
+                .getPublicUrl(fileName);
+
+              return publicUrlData.publicUrl;
+            });
+
+            // Wait for all uploads to finish simultaneously
+            uploadedImageUrls = await Promise.all(uploadPromises);
+
+          } catch (error) {
+            alert("IMAGE UPLOAD FAILED: " + error.message);
+            btn.innerText = 'Submit to Vault';
+            btn.disabled = false;
+            return; // Stop execution
+          }
+        }
+
+        btn.innerText = 'SAVING DATA TO VAULT...';
+
+        // 2. COMPRESS EXTRA DETAILS
+        const detailedNotes = `
+          Name: ${valName} | 
+          Phone: ${valPhone} | 
+          City: ${valCity} | 
+          Category: ${valCat} | 
+          Size: ${valSize} | 
+          Condition: ${valCond} | 
+          Flaws: ${valFlaws} | 
+          Measurements: ${valMeas}
+        `;
+
+        // 3. SAVE TO DATABASE TABLE
+        const { error: dbError } = await supabase
+          .from('consignments')
+          .insert([
+            {
+              customer_email: valEmail,
+              item_name: valBrand + " - " + valItemName,
+              price: valPrice,
+              measurements: detailedNotes,
+              status: 'PENDING',
+              image_urls: uploadedImageUrls
+            }
+          ]);
+
+        if (dbError) {
+          alert("DATABASE ERROR: " + dbError.message);
+          btn.innerText = 'Submit to Vault';
+          btn.disabled = false;
+        } else {
+          // --- DISCORD PING INITIATED ---
+          const discordWebhookUrl = 'https://discord.com/api/webhooks/1481288547959836717/xauZ5CinVxuASOo9TYKJFbFQfC7MvBe9p8xdr_IIR_zg4jkb1jWkYCuE7YE26CQtRS98';
+          
+          const discordMessage = {
+            content: null,
+            embeds: [{
+              title: "🚨 NEW ARTIFACT IN THE VAULT",
+              color: 0, 
+              fields: [
+                { name: "Seller Email", value: valEmail, inline: true },
+                { name: "Item", value: valBrand + " " + valItemName, inline: true },
+                { name: "Expected Payout", value: "₹" + valPrice, inline: true },
+                { name: "Condition", value: valCond, inline: true },
+                { name: "City", value: valCity, inline: true }
+              ],
+              footer: { text: "Devil's Den Automated System" },
+              timestamp: new Date().toISOString()
+            }]
+          };
+
+          // Send the ping quietly in the background
+          fetch(discordWebhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(discordMessage)
+          }).then(() => {
+            alert("SUCCESS: ARTIFACT & IMAGES LOGGED SECURELY.");
+            window.location.href = "/pages/seller-dashboard"; 
+          }).catch((err) => {
+            window.location.href = "/pages/seller-dashboard";
+          });
+        }
+      });
+    }
+
+    // --- GSAP ANIMATIONS ---
+    setTimeout(() => {
+      if(window.gsap) {
+        const tl = gsap.timeline();
+        tl.to('.dd-process-step', { y: 0, opacity: 1, duration: 0.8, stagger: 0.15, ease: "power3.out" });
+        tl.to('.dd-form-section-title, .dd-form-group', { opacity: 1, y: 0, duration: 0.5, stagger: 0.05, ease: "power2.out" }, "-=0.6");
+      }
+    }, 500);
+
+  });
+  </script>
+{% endunless %}
+
+{% schema %}
+{
+  "name": "Damso Submission Form",
+  "presets": [
+    {
+      "name": "Damso Submission Form"
+    }
+  ]
+}
+{% endschema %}

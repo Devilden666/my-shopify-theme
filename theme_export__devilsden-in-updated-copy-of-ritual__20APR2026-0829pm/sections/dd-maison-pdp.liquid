@@ -1,0 +1,618 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<div class="dd-damso-engine" id="engine-{{ section.id }}">
+  
+  <div class="void-viewport">
+    <canvas id="canvas-{{ section.id }}"></canvas>
+  </div>
+
+  <div class="numbered-overlay" id="overlay-{{ section.id }}">
+    <div class="overlay-grid">
+      <div class="product-info">
+         
+         <div class="card-header">
+            <h3 class="o-name">NAME</h3>
+            <span class="o-badge">ARCHIVE</span>
+         </div>
+         
+         <div class="card-body">
+            <div class="o-accordion">
+               <div class="accordion-toggle" id="acc-toggle-{{ section.id }}">
+                  <span>TECHNICAL SPECIFICATIONS</span>
+                  <span class="acc-icon">+</span>
+               </div>
+               <div class="accordion-content" id="acc-content-{{ section.id }}">
+                  <div class="accordion-inner o-desc"></div>
+               </div>
+            </div>
+
+            <div class="card-image-container">
+               <img src="" alt="Product" class="o-card-img" id="card-img-{{ section.id }}" width="1000" height="1000">
+            </div>
+         </div>
+
+         <div class="card-bottom">
+            <div id="add-to-cart-wrapper-{{ section.id }}" class="o-form">
+               <input type="hidden" class="o-variant-id" value="">
+               
+               <div class="o-size-selector">
+                  <label>SIZE / VARIANT</label>
+                  <select class="o-variant-select"></select>
+               </div>
+               
+               <button type="button" class="acquire-btn" id="acquire-btn-{{ section.id }}">
+                  <span class="btn-text">ADD TO CART</span><span class="price-dash"> - </span><span class="o-price">₹0.00</span>
+               </button>
+            </div>
+         </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="interface-layer">
+    <div class="hud-top">
+       <div class="dynamic-meta" id="meta-{{ section.id }}">
+          <span class="m-badge">GALLERY</span> 
+          <div class="clip-wrap"><span class="m-title">LOADING...</span></div>
+       </div>
+    </div>
+
+    <div class="controller-anchor">
+      
+      <div class="os-floating-menu" id="pill-menu-{{ section.id }}">
+         <div class="os-menu-items">
+            <a href="/" class="os-item active">HOME</a>
+            <a href="/collections/all" class="os-item">CATALOG</a>
+            <a href="/cart" class="os-cart-trigger">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6zM3 6h18M16 10a4 4 0 01-8 0"/></svg>
+               <span class="cart-count">{{ cart.item_count | default: '0' }}</span>
+            </a>
+         </div>
+      </div>
+
+      <div class="pod-morph-container pill-mode" id="pod-wrapper-{{ section.id }}">
+         <div class="pill-btn prev-pill" data-nav="prev">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+         </div>
+         <div class="pod-center" id="action-{{ section.id }}" title="Toggle Details">
+            <div class="center-dot"></div>
+         </div>
+         <div class="pill-btn next-pill" data-nav="next">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+         </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  :root { --bg: #ffffff; --text: #000; --dial: #111; }
+  
+  #shopify-section-main-product, .product-section { display: none !important; }
+
+  .dd-damso-engine { 
+    height: 100vh; 
+    height: 100dvh; 
+    width: 100vw; 
+    background: var(--bg); 
+    overflow: hidden; 
+    position: relative; 
+    font-family: 'Helvetica Neue', Helvetica, sans-serif; 
+  }
+  
+  .void-viewport { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  #canvas-{{ section.id }} { width: 100%; height: 100%; }
+  
+  .interface-layer { position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; justify-content: space-between; padding: 40px; pointer-events: none; }
+  
+  /* OVERLAY HIDDEN BY DEFAULT */
+  .numbered-overlay { 
+    position: absolute; inset: 0; z-index: 20; background: transparent; 
+    display: block; opacity: 0; padding: 5vh 5vw; pointer-events: none; 
+  }
+  
+  .hud-top { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; pointer-events: auto; }
+  .dynamic-meta { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 11px; }
+  .m-badge { background: #e0e0e0; padding: 4px 8px; border-radius: 4px; font-size: 9px; color: #000; letter-spacing: 1px;}
+  .clip-wrap { overflow: hidden; display: inline-block; vertical-align: top; }
+  .m-title { display: inline-block; color: #000; text-transform: uppercase; letter-spacing: 1px;}
+
+  .os-floating-menu { position: absolute; bottom: 230px; left: 50%; transform: translate(-50%, 0); z-index: 50; opacity: 0; pointer-events: none; display: flex; justify-content: center; }
+  .os-menu-items { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid #ddd; border-radius: 50px; padding: 6px 8px; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+  .os-item { color: #888; font-size: 11px; font-weight: 900; letter-spacing: 1px; padding: 12px 20px; border-radius: 30px; text-decoration: none; transition: 0.3s; pointer-events: auto; white-space: nowrap; }
+  .os-item.active, .os-item:hover { color: #fff; background: #000; }
+  .os-cart-trigger { display: flex; align-items: center; gap: 8px; padding: 0 15px; border-left: 1px solid #ddd; height: 24px; color: #888; text-decoration: none; cursor: pointer; transition: 0.3s; pointer-events: auto; }
+  .os-cart-trigger:hover { color: #000; }
+  .cart-count { background: #000; color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 900; }
+
+  /* PILL ARCHITECTURE */
+  .controller-anchor { position: relative; pointer-events: none; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 40px; height: 150px; }
+  
+  .pod-morph-container.pill-mode { 
+    position: relative; pointer-events: auto; 
+    width: 230px; height: 52px; border-radius: 26px; 
+    background: var(--dial); overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.25); z-index: 10; 
+    display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+  }
+  
+  .pill-btn { color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 10px; opacity: 0.6; transition: opacity 0.3s, transform 0.3s; }
+  .pill-btn:hover { opacity: 1; transform: scale(1.1); }
+  
+  .pod-center { width: 34px; height: 34px; background: #0a0a0a; border: 1px solid #333; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; box-shadow: inset 0 2px 5px rgba(0,0,0,0.8); }
+  .pod-center:hover { background: #1a1a1a; border-color: #555; }
+  .center-dot { width: 6px; height: 6px; background: #fff; border-radius: 50%; opacity: 0.4; transition: 0.3s; }
+  .pod-center:hover .center-dot { opacity: 1; }
+
+  /* FUTURISTIC GLASSMORPHISM CARD - SIZE OPTIMIZED */
+  .overlay-grid { 
+    display: flex; align-items: center; justify-content: center; 
+    width: 100%; height: 100%; box-sizing: border-box; 
+    padding-bottom: 110px; 
+  } 
+  
+  .product-info { 
+    width: 100%; max-width: 480px; 
+    height: auto; max-height: 85vh; 
+    overflow-y: auto; display: flex; flex-direction: column;
+    background: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(60px) saturate(250%) !important;          
+    -webkit-backdrop-filter: blur(60px) saturate(250%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-radius: 20px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.25), inset 0 0 20px rgba(255, 255, 255, 0.4) !important;
+    padding: 25px; 
+    pointer-events: auto; transition: opacity 0.4s ease;
+  }
+
+  .product-info::-webkit-scrollbar { display: none; }
+  .product-info { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+  .o-name { font-size: 15px; color: #000; font-weight: 900; margin: 0; line-height: 1; text-transform: uppercase; letter-spacing: 0.5px; }
+  .o-badge { background: #e0e0e0; padding: 4px 8px; border-radius: 4px; font-size: 9px; color: #333; font-weight: 800; letter-spacing: 0.5px; border: 1px solid rgba(0,0,0,0.05); }
+  
+  .card-body {
+      background: rgba(255, 255, 255, 0.4); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 12px;
+      padding: 15px; 
+      display: flex; flex-direction: column; 
+      margin-bottom: 20px; 
+      min-height: auto; 
+  }
+
+  .o-accordion { width: 100%; text-align: left; }
+  .accordion-toggle { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.05); padding: 8px 14px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; color: #333; transition: 0.3s; }
+  .accordion-toggle:hover { background: rgba(0,0,0,0.1); color: #000; }
+  .accordion-content { height: 0; overflow: hidden; }
+  .accordion-inner { padding: 15px 0 0 0; font-size: 12px; color: #444; line-height: 1.6; text-transform: uppercase; letter-spacing: 0.5px;}
+  
+  .card-image-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; margin-top: 15px; }
+  .o-card-img { 
+    max-height: 220px; 
+    max-width: 100%; object-fit: contain; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.15));
+  } 
+  
+  .o-form { opacity: 0; transform: translateY(10px); }
+  
+  .o-size-selector { display: flex; justify-content: space-between; align-items: center; padding: 0 5px; margin-bottom: 12px; }
+  .o-size-selector label { font-size: 11px; font-weight: 900; color: #000; letter-spacing: 1px; }
+  .o-size-selector select { background: transparent; border: none; font-size: 12px; font-weight: 900; color: #000; cursor: pointer; outline: none; text-align: right; appearance: none; -webkit-appearance: none; }
+  
+  .acquire-btn { position: relative; z-index: 100; pointer-events: auto; width: 100%; background: #000; color: #fff; border: none; padding: 16px; font-size: 12px; font-weight: 900; cursor: pointer; letter-spacing: 1.5px; transition: background 0.3s; border-radius: 6px; text-transform: uppercase; display: flex; justify-content: center; align-items: center; }
+  .acquire-btn:hover { background: #333; }
+  .acquire-btn:disabled { background: #eee; cursor: not-allowed; color: #999; } 
+  .o-price { font-weight: 900; font-family: monospace; font-size: 13px; margin-left: 5px; }
+  .price-dash { margin-left: 5px; }
+
+  @media screen and (max-width: 768px) {
+    .interface-layer { padding: 20px; }
+    .controller-anchor { padding-bottom: 20px; height: 150px; }
+    .overlay-grid { padding-bottom: 100px; } 
+    .product-info { max-width: 92%; padding: 20px; max-height: 80vh; }
+    .card-body { padding: 15px; margin-bottom: 15px; }
+    .o-card-img { max-height: 180px; }
+    .o-name { font-size: 13px; }
+    .acquire-btn { padding: 16px; font-size: 11px; }
+    .os-floating-menu { bottom: 120px; width: 95%; }
+    .os-menu-items { width: 100%; justify-content: space-between; padding: 4px; }
+    .os-item { padding: 10px; font-size: 9px; letter-spacing: 0.5px; }
+    .os-cart-trigger { padding: 0 10px; }
+  }
+</style>
+
+<script>
+const runDamsoLinearEngine = () => {
+  const container = document.querySelector('#engine-{{ section.id }}');
+  const canvas = container.querySelector('#canvas-{{ section.id }}');
+  if(!canvas || !window.THREE || !window.gsap) return;
+
+  gsap.defaults({ ease: "expo.out" });
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+  renderer.setSize(container.offsetWidth, container.offsetHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace; 
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xffffff); 
+  
+  const cameraGroup = new THREE.Group();
+  scene.add(cameraGroup);
+  
+  const isMobile = window.innerWidth < 768;
+  const camera = new THREE.PerspectiveCamera(30, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+  
+  // CAMERA ZOOMED IN BY DEFAULT FOR PRODUCT VIEW
+  camera.position.z = isMobile ? 16 : 10; 
+  cameraGroup.add(camera);
+
+  const mainGroup = new THREE.Group();
+  scene.add(mainGroup);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 2.5));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+  dirLight.position.set(0, 5, 10);
+  scene.add(dirLight);
+
+  // DATA ENGINE: Supports custom images via schema blocks, OR falls back to product images
+  const data = [
+    {% if section.blocks.size > 0 %}
+      {% for block in section.blocks %}
+        {
+          t: `{{ block.settings.title_override | default: product.title | escape }}`,
+          img: `{{ block.settings.image | image_url: width: 2048 }}`,
+          p: `{{ product.selected_or_first_available_variant.price | money }}`,
+          desc: {{ product.description | json }},
+          hasProduct: true,
+          variants: [
+            {% for variant in product.variants %}
+              { id: {{ variant.id }}, title: `{{ variant.title | escape }}`, available: {{ variant.available }} }{% unless forloop.last %},{% endunless %}
+            {% endfor %}
+          ]
+        }{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    {% elsif product.media.size > 0 %}
+      {% for media in product.media %}
+        {
+          t: `{{ product.title | escape }} - Image {{ forloop.index }}`,
+          img: `{{ media | image_url: width: 2048 }}`, // 2048x FOR ZERO BLUR
+          p: `{{ product.selected_or_first_available_variant.price | money }}`,
+          desc: {{ product.description | json }},
+          hasProduct: true,
+          variants: [
+            {% for variant in product.variants %}
+              { id: {{ variant.id }}, title: `{{ variant.title | escape }}`, available: {{ variant.available }} }{% unless forloop.last %},{% endunless %}
+            {% endfor %}
+          ]
+        }{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    {% else %}
+      {
+        t: `{{ product.title | escape }}`,
+        img: ``,
+        p: `{{ product.selected_or_first_available_variant.price | money }}`,
+        desc: {{ product.description | json }},
+        hasProduct: true,
+        variants: [
+          {% for variant in product.variants %}
+            { id: {{ variant.id }}, title: `{{ variant.title | escape }}`, available: {{ variant.available }} }{% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        ]
+      }
+    {% endif %}
+  ];
+
+  const loader = new THREE.TextureLoader();
+  loader.setCrossOrigin('anonymous');
+  
+  const meshes = [];
+  const gap = 4.2; 
+
+  data.forEach((item, i) => {
+    if(!item.img) return; 
+    loader.load(item.img, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.minFilter = THREE.LinearFilter; 
+        tex.magFilter = THREE.LinearFilter;
+        tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); 
+        
+        const aspect = tex.image.width / tex.image.height;
+        
+        let planeHeight = 3.5; 
+        let planeWidth = planeHeight * aspect;
+
+        if (planeWidth > 8) {
+            planeWidth = 8;
+            planeHeight = planeWidth / aspect;
+        }
+
+        const geom = new THREE.PlaneGeometry(planeWidth, planeHeight);
+        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+        const mesh = new THREE.Mesh(geom, mat);
+        
+        mesh.position.set(i * gap, 0, 0);
+        mainGroup.add(mesh);
+        meshes.push({ mesh, index: i });
+    });
+  });
+
+  let curIdx = 0;
+
+  const updateTitle = () => {
+    const safeIdx = Math.max(0, Math.min(curIdx, data.length - 1));
+    if(!data[safeIdx]) return;
+    
+    const titleEl = container.querySelector('#meta-{{ section.id }} .m-title');
+    if(!titleEl) return;
+    
+    gsap.to(titleEl, { 
+       yPercent: -100, duration: 0.3, ease: "power2.in",
+       onComplete: () => {
+          titleEl.innerText = data[safeIdx].t;
+          gsap.fromTo(titleEl, { yPercent: 100 }, { yPercent: 0, duration: 0.5, ease: "power3.out" });
+       }
+    });
+  };
+  setTimeout(updateTitle, 100);
+
+  let targetX = 0;
+  const goToIndex = (dir, speed = 0.8) => {
+    if (dir === 'next') curIdx++;
+    if (dir === 'prev') curIdx--;
+    
+    curIdx = Math.max(0, Math.min(curIdx, data.length - 1));
+    targetX = -(curIdx * gap);
+    
+    gsap.to(mainGroup.position, { x: targetX, duration: speed, overwrite: "auto" });
+    updateTitle();
+    updateProductDetails();
+  };
+
+  container.querySelectorAll('[data-nav="next"]').forEach(el => el.onclick = () => goToIndex('next'));
+  container.querySelectorAll('[data-nav="prev"]').forEach(el => el.onclick = () => goToIndex('prev'));
+
+  // PILL CENTER BUTTON TOGGLES GLASS CARD VISIBILITY
+  const podCenter = container.querySelector('#action-{{ section.id }}');
+  const overlay = container.querySelector('#overlay-{{ section.id }}');
+  
+  // CHANGED: State defaults to false (Card Hidden)
+  let cardVisible = false;
+
+  if(podCenter) {
+      podCenter.onclick = () => {
+         cardVisible = !cardVisible;
+         
+         // Animate overlay visibility
+         gsap.to(overlay, { 
+             opacity: cardVisible ? 1 : 0, 
+             pointerEvents: cardVisible ? 'auto' : 'none', 
+             duration: 0.4 
+         });
+         
+         // Optional Touch: Expand and glow the center dot to indicate active state
+         const dot = podCenter.querySelector('.center-dot');
+         if (dot) {
+             gsap.to(dot, { 
+                 scale: cardVisible ? 1.8 : 1, 
+                 opacity: cardVisible ? 1 : 0.4, 
+                 duration: 0.3 
+             });
+         }
+      };
+  }
+
+  const accToggle = container.querySelector('#acc-toggle-{{ section.id }}');
+  const accContent = container.querySelector('#acc-content-{{ section.id }}');
+  const accIcon = accToggle ? accToggle.querySelector('.acc-icon') : null;
+  let accOpen = false;
+
+  if(accToggle) {
+      accToggle.onclick = () => {
+         accOpen = !accOpen;
+         if(accOpen) {
+            gsap.to(accContent, { height: 'auto', duration: 0.4, ease: "power2.out" });
+            if(accIcon) accIcon.innerText = '-';
+         } else {
+            gsap.to(accContent, { height: 0, duration: 0.4, ease: "power2.out" });
+            if(accIcon) accIcon.innerText = '+';
+         }
+      };
+  }
+
+  const updateProductDetails = () => {
+    const safeItem = data[curIdx];
+    if(!safeItem) return;
+
+    accOpen = false;
+    gsap.set(accContent, { height: 0 });
+    if(accIcon) accIcon.innerText = '+';
+
+    const els = ['.o-name', '.o-badge', '.card-body', '.o-form', '.o-price', '.price-dash'].map(c => container.querySelector(c)).filter(Boolean);
+    gsap.killTweensOf(els);
+
+    const tl = gsap.timeline();
+    tl.to(els, { opacity: 0, duration: 0.2 })
+      .call(() => {
+        container.querySelector('.o-name').innerText = safeItem.t;
+        container.querySelector('.o-price').innerText = safeItem.p;
+        container.querySelector('.o-desc').innerHTML = safeItem.desc;
+        
+        const innerImg = container.querySelector('#card-img-{{ section.id }}');
+        if(safeItem.img) {
+            innerImg.src = safeItem.img;
+            innerImg.style.display = 'block';
+        } else {
+            innerImg.style.display = 'none';
+        }
+        
+        const variantSelect = container.querySelector('.o-variant-select');
+        const variantIdInput = container.querySelector('.o-variant-id');
+        const sizeSelectorDiv = container.querySelector('.o-size-selector');
+        const acqBtn = container.querySelector('.acquire-btn');
+        const btnText = container.querySelector('.btn-text');
+        const priceDash = container.querySelector('.price-dash');
+        const priceTag = container.querySelector('.o-price');
+        
+        variantSelect.innerHTML = '';
+        
+        if (safeItem.hasProduct && safeItem.variants.length > 0) {
+           acqBtn.disabled = false;
+           btnText.innerText = "ADD TO CART"; 
+           priceDash.style.display = "inline";
+           priceTag.style.display = "inline";
+           
+           if(safeItem.variants.length === 1 && safeItem.variants[0].title === 'Default Title') {
+               sizeSelectorDiv.style.display = 'none';
+           } else {
+               sizeSelectorDiv.style.display = 'flex';
+           }
+
+           safeItem.variants.forEach(v => {
+              const opt = document.createElement('option');
+              opt.value = v.id;
+              opt.innerText = v.title;
+              if(!v.available) {
+                 opt.disabled = true;
+                 opt.innerText += ' (Out of stock)';
+              }
+              variantSelect.appendChild(opt);
+           });
+           
+           variantIdInput.value = variantSelect.value;
+           variantSelect.onchange = (e) => { variantIdInput.value = e.target.value; };
+        } else {
+           sizeSelectorDiv.style.display = 'none';
+           acqBtn.disabled = true;
+           btnText.innerText = "OUT OF STOCK";
+           priceDash.style.display = "none";
+           priceTag.style.display = "none";
+           variantIdInput.value = "";
+        }
+      })
+      .fromTo(container.querySelector('.o-name'), { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4 })
+      .fromTo(container.querySelector('.o-badge'), { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4 }, "-=0.2")
+      .fromTo(container.querySelector('.card-body'), { scale: 0.95, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4 }, "-=0.2")
+      .fromTo(container.querySelector('.o-form'), { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4 }, "-=0.2")
+      .fromTo(container.querySelectorAll('.o-price, .price-dash'), { opacity: 0 }, { opacity: 1, duration: 0.4 }, "-=0.2");
+  };
+
+  updateProductDetails(); // Initial call
+
+  const acqBtn = container.querySelector('#acquire-btn-{{ section.id }}');
+  if(acqBtn) {
+      acqBtn.addEventListener('click', (e) => {
+         e.preventDefault(); 
+         
+         const variantInput = container.querySelector('.o-variant-id');
+         if(!variantInput.value) {
+             alert("Please select a valid size.");
+             return;
+         }
+
+         const btnText = container.querySelector('.btn-text');
+         const originalText = btnText.innerText;
+         
+         btnText.innerText = 'ADDING...';
+         acqBtn.disabled = true;
+
+         let payload = { items: [{ id: parseInt(variantInput.value), quantity: 1 }] };
+         let rootUrl = window.Shopify && window.Shopify.routes && window.Shopify.routes.root ? window.Shopify.routes.root : '/';
+         let cartAddUrl = rootUrl + 'cart/add.js';
+         cartAddUrl = cartAddUrl.replace('//', '/');
+
+         fetch(cartAddUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload)
+         })
+         .then(response => {
+            if (!response.ok) throw new Error('Network Error');
+            return response.json();
+         })
+         .then(data => {
+            btnText.innerText = 'ADDED!';
+            fetch(rootUrl + 'cart.js')
+              .then(res => res.json())
+              .then(cartData => {
+                 document.querySelectorAll('.cart-count, .cart-count-bubble span').forEach(el => el.innerText = cartData.item_count);
+                 document.dispatchEvent(new CustomEvent('cart:updated'));
+                 document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+                 document.dispatchEvent(new CustomEvent('cart:build'));
+              });
+            setTimeout(() => { btnText.innerText = originalText; acqBtn.disabled = false; }, 2500);
+         })
+         .catch((error) => {
+            console.error('Add to Cart Error:', error);
+            btnText.innerText = 'ERROR ADDING';
+            setTimeout(() => { btnText.innerText = originalText; acqBtn.disabled = false; }, 2000);
+         });
+      });
+  }
+
+  const lerp = (start, end, factor) => start + (end - start) * factor;
+
+  const animate = () => {
+    requestAnimationFrame(animate);
+    mainGroup.position.x = lerp(mainGroup.position.x, targetX, 0.08);
+    
+    meshes.forEach((obj, idx) => {
+       let distFromCenter = Math.abs(obj.mesh.position.x - targetX);
+       
+       const targetScale = (idx === curIdx) ? 1 : Math.max(0.4, 1 - (distFromCenter * 0.025));
+       const targetOpacity = (idx === curIdx) ? 1 : Math.max(0, 1 - (distFromCenter * 0.04));
+       
+       obj.mesh.scale.x = lerp(obj.mesh.scale.x, targetScale, 0.1);
+       obj.mesh.scale.y = lerp(obj.mesh.scale.y, targetScale, 0.1);
+       
+       if(obj.mesh.material) {
+           obj.mesh.material.opacity = lerp(obj.mesh.material.opacity, targetOpacity, 0.1);
+       }
+    });
+
+    renderer.render(scene, camera);
+  };
+  animate();
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(container.offsetWidth, container.offsetHeight);
+    camera.aspect = container.offsetWidth / container.offsetHeight;
+    camera.updateProjectionMatrix();
+  });
+};
+
+document.addEventListener('DD_Engines_Ready', runDamsoLinearEngine);
+if(window.THREE && window.gsap) runDamsoLinearEngine();
+</script>
+
+{% schema %}
+{
+  "name": "Damso Maison PDP",
+  "settings": [],
+  "blocks": [
+    {
+      "type": "custom_image",
+      "name": "Custom Image Override",
+      "settings": [
+        { 
+           "type": "image_picker", 
+           "id": "image", 
+           "label": "Custom Slide Image",
+           "info": "Leave this section empty to automatically use the product's default gallery images."
+        },
+        { 
+           "type": "text", 
+           "id": "title_override", 
+           "label": "Title Override (Optional)" 
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Damso Maison PDP"
+    }
+  ]
+}
+{% endschema %}

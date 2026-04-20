@@ -1,0 +1,292 @@
+<style>
+  /* 1. AGGRESSIVELY HIDE THE DEFAULT SHOPIFY FOOTER */
+  #shopify-section-footer, 
+  .footer, 
+  .site-footer {
+    display: none !important;
+    position: absolute !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* 2. MAISON FOOTER ARCHITECTURE */
+  #dd-footer-{{ section.id }} {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    padding: 80px 40px 30px 40px;
+    overflow: hidden;
+  }
+
+  .dd-footer-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 60px;
+    margin-bottom: 80px;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* LEFT: WHITE NEWSLETTER BOX (SIGN UP) */
+  .dd-newsletter-box {
+    background-color: #ffffff;
+    color: #000000;
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+    flex-shrink: 0;
+  }
+
+  .dd-newsletter-box h2 {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin: 0 0 30px 0;
+    text-transform: uppercase;
+    color: #000000;
+  }
+
+  .dd-form-field {
+    margin-bottom: 20px;
+  }
+
+  .dd-input {
+    width: 100%;
+    border: none !important;
+    border-bottom: 1px solid #000000 !important;
+    padding: 10px 0 !important;
+    font-size: 11px !important;
+    font-family: 'Helvetica Neue', Helvetica, sans-serif !important;
+    outline: none !important;
+    background: transparent !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  .dd-input::placeholder {
+    color: #000000 !important;
+    opacity: 1;
+  }
+
+  .dd-email-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 1px solid #000000;
+  }
+
+  .dd-email-row .dd-input {
+    border-bottom: none !important;
+    width: 70%;
+    padding-bottom: 5px !important;
+  }
+
+  .dd-submit-btn {
+    background: none !important;
+    border: none !important;
+    color: #000000 !important;
+    font-size: 10px !important;
+    font-weight: 900 !important;
+    cursor: pointer !important;
+    padding: 0 0 5px 0 !important;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: opacity 0.3s;
+  }
+
+  .dd-submit-btn:hover {
+    opacity: 0.6;
+  }
+
+  .dd-newsletter-disclaimer {
+    font-size: 9px;
+    line-height: 1.4;
+    margin-top: 20px;
+    color: #555555;
+  }
+
+  /* RIGHT: LINKS GRID */
+  .dd-links-grid {
+    display: flex;
+    gap: 80px;
+    flex-grow: 1;
+    justify-content: flex-end;
+  }
+
+  .dd-footer-col h4 {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    margin: 0 0 25px 0;
+    text-transform: uppercase;
+    color: #ffffff;
+  }
+
+  .dd-footer-col ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .dd-footer-col li {
+    margin-bottom: 15px;
+  }
+
+  .dd-footer-col a {
+    color: #cccccc;
+    text-decoration: none;
+    font-size: 11px;
+    transition: color 0.3s ease;
+    text-transform: uppercase;
+  }
+
+  .dd-footer-col a:hover {
+    color: #ffffff;
+  }
+
+  /* BOTTOM: MASSIVE LOGO TEXT */
+  .dd-massive-logo {
+    font-family: "Times New Roman", Times, serif;
+    font-size: clamp(6rem, 24vw, 28rem);
+    font-weight: 400;
+    text-align: center;
+    line-height: 0.75;
+    letter-spacing: 0.02em;
+    color: #ffffff;
+    margin: 0 -40px; 
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* COPYRIGHT */
+  .dd-copyright {
+    text-align: center;
+    font-size: 9px;
+    color: #666666;
+    margin-top: 40px;
+    letter-spacing: 0.5px;
+  }
+
+  /* MOBILE OPTIMIZATIONS */
+  @media screen and (max-width: 900px) {
+    #dd-footer-{{ section.id }} {
+      padding: 60px 20px 20px 20px;
+    }
+    .dd-footer-top {
+      flex-direction: column;
+      gap: 60px;
+    }
+    .dd-newsletter-box {
+      max-width: 100%;
+    }
+    .dd-links-grid {
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: 40px 60px;
+    }
+    .dd-massive-logo {
+      margin: 0 -20px;
+    }
+  }
+</style>
+
+<footer id="dd-footer-{{ section.id }}">
+  <div class="dd-footer-top">
+    
+    <div class="dd-newsletter-box">
+      <h2>SIGN UP</h2>
+      
+      {%- form 'customer', id: 'ContactFooter' -%}
+        <input type="hidden" name="contact[tags]" value="newsletter">
+        
+        <div class="dd-form-field">
+          <input type="text" name="contact[note][Title]" placeholder="Title" class="dd-input">
+        </div>
+        <div class="dd-form-field">
+          <input type="text" name="contact[first_name]" placeholder="First name*" required class="dd-input">
+        </div>
+        <div class="dd-form-field">
+          <input type="text" name="contact[last_name]" placeholder="Name*" required class="dd-input">
+        </div>
+        
+        <div class="dd-email-row">
+          <input type="email" name="contact[email]" placeholder="E-mail address*" required class="dd-input">
+          <button type="submit" class="dd-submit-btn">▶ SUBSCRIBE</button>
+        </div>
+
+        {%- if form.posted_successfully? -%}
+          <p style="color: #000; font-size: 10px; margin-top: 15px; font-weight: bold;">Thank you for subscribing.</p>
+        {%- endif -%}
+
+        <div class="dd-newsletter-disclaimer">
+          *Required field<br>
+          I agree that Devil may collect my personal data in order to send me Devil newsletters.
+        </div>
+      {%- endform -%}
+    </div>
+
+    <div class="dd-links-grid">
+      
+      <div class="dd-footer-col">
+        <h4>SERVICE</h4>
+        <ul>
+          <li><a href="/collections/all">Catalogue</a></li>
+          <li><a href="{{ routes.account_url }}">My Account</a></li>
+          <li><a href="{{ routes.cart_url }}">View Cart</a></li>
+          {%- comment -%} Mapping 'Contact Us' directly to your Contact Info policy {%- endcomment -%}
+          <li><a href="{{ shop.contact_information.url }}">Contact Us</a></li>
+        </ul>
+      </div>
+
+      <div class="dd-footer-col">
+        <h4>LEGAL NOTICES</h4>
+        <ul>
+          <li><a href="{{ shop.terms_of_service.url }}">Terms of service</a></li>
+          <li><a href="{{ shop.privacy_policy.url }}">Privacy policy</a></li>
+          <li><a href="{{ shop.refund_policy.url }}">Return and refund policy</a></li>
+          <li><a href="{{ shop.shipping_policy.url }}">Shipping policy</a></li>
+          <li><a href="{{ shop.contact_information.url }}">Contact information</a></li>
+        </ul>
+      </div>
+
+      <div class="dd-footer-col">
+        <h4>FOLLOW US</h4>
+        <ul>
+          <li><a href="https://instagram.com/devilsden" target="_blank" rel="noopener">Instagram</a></li>
+          <li><a href="https://twitter.com/devilsden" target="_blank" rel="noopener">X / Twitter</a></li>
+          <li><a href="https://tiktok.com/@devilsden" target="_blank" rel="noopener">TikTok</a></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="dd-massive-logo">
+    DEVIL
+  </div>
+
+  <div class="dd-copyright">
+    Copyright &copy; {{ 'now' | date: "%Y" }} DEVIL. All Rights Reserved.
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "Damso Footer",
+  "tag": "section",
+  "class": "section-footer",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Damso Footer",
+      "category": "Footer"
+    }
+  ]
+}
+{% endschema %}

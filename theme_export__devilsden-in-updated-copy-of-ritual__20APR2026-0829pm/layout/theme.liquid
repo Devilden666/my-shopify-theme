@@ -1,0 +1,498 @@
+<!doctype html>
+<html
+  {% if request.design_mode %}
+    class="shopify-design-mode"
+  {% endif %}
+  lang="{{ request.locale.iso_code }}"
+>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=block" rel="stylesheet">
+
+    {%- if settings.favicon != blank -%}
+      <link
+        rel="icon"
+        type="image/png"
+        href="{{ settings.favicon | image_url: width: 32, height: 32 }}"
+      >
+    {%- endif -%}
+
+    {% comment %} 
+      WARNING: Disable native view transitions in Shopify Theme Settings to prevent conflicts with the custom GSAP curtain.
+    {% endcomment %}
+    {% if settings.transition_to_main_product or settings.page_transition_enabled %}
+      <link
+        rel="expect"
+        href="#MainContent"
+        blocking="render"
+        id="view-transition-render-blocker"
+      >
+    {% endif %}
+
+    {%- render 'meta-tags' -%}
+    {%- render 'stylesheets' -%}
+    {%- render 'fonts' -%}
+    {%- render 'scripts' -%}
+    {%- render 'theme-styles-variables' -%}
+    {%- render 'color-schemes' -%}
+
+    {% if request.design_mode %}
+      {%- render 'theme-editor' -%}
+    {% endif %}
+
+    {{ content_for_header }}
+
+    <style>
+      /* Standardizes scroll behavior to prevent browser conflicts */
+      html.lenis, html.lenis body { height: auto; }
+      .lenis.lenis-smooth { scroll-behavior: auto !important; }
+      .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+      .lenis.lenis-stopped { overflow: hidden; }
+      .lenis.lenis-scrolling iframe { pointer-events: none; }
+      
+      /* Razor-thin Maison Scrollbar */
+      ::-webkit-scrollbar { width: 4px; }
+      ::-webkit-scrollbar-track { background: #ffffff; }
+      ::-webkit-scrollbar-thumb { background: #000000; }
+      ::-webkit-scrollbar-thumb:hover { background: #333333; }
+
+      /* Force the browser's base layer to be dark instantly to prevent white flash */
+      html, body {
+        background-color: #030303 !important; 
+      }
+
+      /* The pitch-black curtain that wipes across the screen */
+      .dd-page-transition-curtain {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        background-color: #030303; /* Matches the WebGL preloader void */
+        z-index: 9999999; /* Sits above everything except the native preloader */
+        pointer-events: none;
+        visibility: visible; /* Start visible by default to block the white flash */
+        transform: translateY(0); 
+      }
+    </style>
+    <style>
+/* 3. Make the message/comment box permanently white and visible */
+@media screen and (min-width: 1px) {
+  .contact-form textarea,
+  #contact_form textarea,
+  [id^="contact_form"] textarea {
+    background-color: #ffffff !important; /* Make the background white */
+    color: #000000 !important;           /* Make the text black so it can be read */
+    border: 1px solid #000000 !important; /* Add a clean black border to define it */
+    visibility: visible !important;        /* Ensure it's never hidden by other code */
+  }
+
+  /* Optional: Also apply to the inputs (Name, Email) for a matching look */
+  .contact-form input[type="text"],
+  .contact-form input[type="email"] {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+  }
+}
+/* --- Fix for Overlapping "Ghost" Hover Images --- */
+      /* Hides the second image by default */
+      .card-wrapper .media > img + img,
+      .product-item .media > img + img,
+      .product-card-wrapper .media > img + img {
+        opacity: 0 !important;
+        transition: opacity 0.3s ease-in-out !important;
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* On hover: Hides the first image */
+      .card-wrapper:hover .media > img:first-child,
+      .product-item:hover .media > img:first-child,
+      .product-card-wrapper:hover .media > img:first-child {
+        opacity: 0 !important;
+      }
+
+      /* On hover: Shows the second image cleanly */
+      .card-wrapper:hover .media > img + img,
+      .product-item:hover .media > img + img,
+      .product-card-wrapper:hover .media > img + img {
+        opacity: 1 !important;
+      }
+</style>
+  </head>
+
+  <body class="page-width-{{ settings.page_width }} card-hover-effect-{{ settings.card_hover_effect }}">
+    {% render 'skip-to-content-link', href: '#MainContent', text: 'accessibility.skip_to_text' %}
+    <div id="header-group">
+      {% sections 'header-group' %}
+    </div>
+
+    <script>
+      // Inline header height and menu style calculations to prevent layout shift
+      // Note: Updates in calculateHeaderGroupHeight(), updateTransparentHeaderOffset() and setHeaderMenuStyle() utilities.js should be kept in sync with this function
+      (function setHeaderHeighCustomProperties() {
+        /*
+         * Header calculation functions for maintaining CSS variables
+         * Mimic calculateHeaderGroupHeight() in utilities.js
+         */
+        const header = document.querySelector('header-component');
+        const headerGroup = document.querySelector('#header-group');
+        const hasHeaderSection = headerGroup?.querySelector('.header-section');
+
+        if (!header || !headerGroup) return;
+
+        const headerTopRow = header.querySelector('.header__row--top');
+        const headerHeight = header.offsetHeight;
+
+        // Calculate the total height of the header group
+        let headerGroupHeight = 0;
+        const children = headerGroup.children;
+        for (let i = 0; i < children.length; i++) {
+          const element = children[i];
+          if (element === header || !(element instanceof HTMLElement)) continue;
+          headerGroupHeight += element.offsetHeight;
+        }
+
+        // Check for transparent header special case
+        if (header.hasAttribute('transparent') && header.parentElement?.nextElementSibling) {
+          headerGroupHeight += headerHeight;
+        }
+
+        // Set CSS variables
+        document.body.style.setProperty('--header-height', `${headerHeight}px`);
+        document.body.style.setProperty('--header-group-height', `${headerGroupHeight}px`);
+
+        if (headerTopRow) {
+          window.requestAnimationFrame(function () {
+            document.body.style.setProperty('--top-row-height', `${headerTopRow.offsetHeight}px`);
+          });
+        }
+
+        /**
+         * Updates CSS custom properties for transparent header offset calculation
+         * Mimic updateTransparentHeaderOffset() in utilities.js
+         */
+
+        if (!hasHeaderSection || !header?.hasAttribute('transparent')) {
+          document.body.style.setProperty('--transparent-header-offset-boolean', '0');
+          return;
+        }
+
+        const hasImmediateSection = hasHeaderSection.nextElementSibling?.classList.contains('shopify-section');
+
+        const shouldApplyOffset = !hasImmediateSection ? '1' : '0';
+        document.body.style.setProperty('--transparent-header-offset-boolean', shouldApplyOffset);
+      })();
+
+      (function setHeaderMenuStyle() {
+        const headerComponent = document.querySelector('#header-component');
+        if (headerComponent) {
+          const isTouchDevice = 'ontouchstart' in window && navigator.maxTouchPoints > 0;
+          const overflowList = headerComponent?.querySelector('overflow-list');
+          const hasReachedMinimum = overflowList && overflowList.hasAttribute('minimum-reached');
+          headerComponent.dataset.menuStyle = isTouchDevice || hasReachedMinimum ? 'drawer' : 'menu';
+        }
+      })();
+    </script>
+
+    <main
+      id="MainContent"
+      class="content-for-layout"
+      role="main"
+      data-page-transition-enabled="{{ settings.page_transition_enabled }}"
+      data-product-transition="{{ settings.transition_to_main_product }}"
+      data-template="{{ template }}"
+    >
+      {{ content_for_layout }}
+    </main>
+
+    </main>
+
+    <footer>
+      {% sections 'footer-group' %}
+    </footer>
+
+    {% render 'search-modal' %}
+
+    {% if settings.quick_add or settings.mobile_quick_add %}
+      {% render 'quick-add-modal' %}
+    {% endif %}
+
+    {% comment %} ==============================================================================
+      AWWWARDS TIER MASTER ARCHITECTURE: Styles, Transitions, Cursor, and Smooth Scroll
+    ============================================================================================== {% endcomment %}
+
+    <style>
+      /* --- 1. NEW FIX: Prevent products/images from overlapping/creeping when hovered --- */
+      @media (pointer: fine) {
+        .card-wrapper:hover,
+        .product-item:hover,
+        .collection__item:hover,
+        a[href*="/products/"]:hover,
+        .vault-item:hover {
+          z-index: 100 !important; 
+          isolation: isolate !important; 
+          position: relative; 
+        }
+      }
+
+      /* --- 2. Standardize scroll behavior for lenis smooth scroll --- */
+      html.lenis, html.lenis body {
+        height: auto;
+      }
+      .lenis.lenis-smooth {
+        scroll-behavior: auto !important;
+      }
+      .lenis.lenis-smooth [data-lenis-prevent] {
+        overscroll-behavior: contain;
+      }
+      .lenis.lenis-stopped {
+        overflow: hidden;
+      }
+      .lenis.lenis-scrolling iframe {
+        pointer-events: none;
+      }
+
+      /* --- 3. Page Transition Curtain (The black sweep animation) --- */
+      /* CRITICAL FIX: Ensure the curtain is blocking the screen IMMEDIATELY on load to prevent white flashes */
+      .dd-page-transition-curtain {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        background-color: #030303; /* Deep black void */
+        z-index: 9999999; 
+        pointer-events: none;
+        transform: translateY(0); /* Start fully covering the screen */
+        will-change: transform;
+      }
+
+      /* --- 4. Custom Cursor (The dot and lagging ring) --- */
+      @media (pointer: coarse) {
+        .dd-cursor-dot, .dd-cursor-ring {
+          display: none !important;
+        }
+      }
+
+      @media (pointer: fine) {
+        /* Hide standard cursor globally */
+        body, a, button, input, select, textarea, .vault-item {
+          cursor: none !important; 
+        }
+
+        .dd-cursor-dot,
+        .dd-cursor-ring {
+          position: fixed;
+          top: 0;
+          left: 0;
+          pointer-events: none; 
+          z-index: 99999999;
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          mix-blend-mode: difference; 
+          will-change: transform, width, height;
+        }
+
+        .dd-cursor-dot {
+          width: 6px;
+          height: 6px;
+          background-color: #ffffff;
+        }
+
+        .dd-cursor-ring {
+          width: 36px;
+          height: 36px;
+          border: 1px solid #ffffff;
+          transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+                      height 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+                      background-color 0.3s ease,
+                      border-color 0.3s ease;
+        }
+
+        .dd-cursor-ring.active {
+          width: 60px;
+          height: 60px;
+          background-color: #ffffff; 
+          border-color: transparent;
+        }
+      }
+    </style>
+
+    {% comment %} CRITICAL FIX: Moved HTML elements OUTSIDE of the <style> tags {% endcomment %}
+    <div class="dd-cursor-dot"></div>
+    <div class="dd-cursor-ring"></div>
+    <div class="dd-page-transition-curtain"></div>
+
+    {% comment %} Load Core Libraries from CDN to guarantee they are available for the scripts below {% endcomment %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+
+    <script>
+      // ==============================================================================
+      // 1. LENIS SMOOTH SCROLL INITIALIZATION
+      // Initiated immediately (not in DOMContentLoaded) to prevent scroll lag on load
+      // ==============================================================================
+      (function initLenis() {
+        const isMobile = window.matchMedia("(pointer: coarse)").matches;
+        
+        const lenis = new Lenis({
+          duration: 1.2, 
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
+          direction: 'vertical',
+          gestureDirection: 'vertical',
+          smooth: true,
+          mouseMultiplier: 1,
+          // CRITICAL MOBILE FIX: Force native touch scrolling, but keep Lenis tracking active 
+          // so that modal popups can successfully call lenis.stop() on mobile devices.
+          smoothTouch: false, 
+          infinite: false,
+        });
+
+        if (window.gsap && window.ScrollTrigger) {
+          lenis.on('scroll', ScrollTrigger.update);
+          gsap.ticker.add((time) => {
+            lenis.raf(time * 1000);
+          });
+          gsap.ticker.lagSmoothing(0, 0);
+        } else {
+          function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+          }
+          requestAnimationFrame(raf);
+        }
+
+        // Shopify Modal Fixes
+        const pauseEvents = ['cart:open', 'menu:open', 'modal:open'];
+        const resumeEvents = ['cart:close', 'menu:close', 'modal:close'];
+
+        pauseEvents.forEach(evt => document.addEventListener(evt, () => lenis.stop()));
+        resumeEvents.forEach(evt => document.addEventListener(evt, () => lenis.start()));
+        
+        window.ddLenis = lenis; // Expose globally for your 3D sections
+      })();
+
+      // ==============================================================================
+      // 2. PAGE TRANSITIONS & CUSTOM CURSOR
+      // ==============================================================================
+      document.addEventListener("DOMContentLoaded", () => {
+        
+        if (typeof gsap === 'undefined') return;
+
+        // --- Init Page Transition (The Curtain Sweep) ---
+        const curtain = document.querySelector('.dd-page-transition-curtain');
+        if (curtain) {
+          // Incoming animation: Sweep curtain UP to reveal the newly loaded page
+          gsap.to(curtain, { 
+            yPercent: -100, 
+            duration: 0.8, 
+            ease: "expo.inOut",
+            delay: 0.1 // Let the browser paint the DOM first
+          });
+
+          // Safari BFCache Fix (prevents users getting stuck on a black screen when clicking back)
+          window.addEventListener("pageshow", function (event) {
+            if (event.persisted) {
+              gsap.set(curtain, { yPercent: -100 });
+            }
+          });
+
+          // Outgoing animation: Intercept links to sweep the curtain down
+          const links = document.querySelectorAll('a');
+          const currentDomain = window.location.hostname;
+
+          links.forEach(link => {
+            link.addEventListener('click', (e) => {
+              const targetUrl = link.getAttribute('href');
+              const targetHost = link.hostname;
+
+              // Strict filters to prevent breaking standard site functionality
+              if (!targetUrl) return; 
+              if (targetHost !== currentDomain && targetHost !== '') return; 
+              if (targetUrl.startsWith('#')) return; 
+              if (targetUrl.startsWith('mailto:') || targetUrl.startsWith('tel:')) return; 
+              if (link.getAttribute('target') === '_blank') return; 
+              if (targetUrl.includes('cart/add') || targetUrl.includes('cart/change')) return; 
+              if (targetUrl === window.location.pathname) return; 
+              
+              // If it's a structural Shopify element with a prevent-default handler, let it be
+              if (e.defaultPrevented) return;
+
+              e.preventDefault(); 
+              
+              // Sweep curtain UP from the bottom to cover screen
+              gsap.fromTo(curtain, 
+                { yPercent: 100 }, 
+                { 
+                  yPercent: 0, 
+                  duration: 0.6, 
+                  ease: "expo.inOut",
+                  onComplete: () => {
+                    window.location.href = targetUrl;
+                  }
+                }
+              );
+            });
+          });
+        }
+
+        // --- Init Custom Cursor Logic ---
+        const isTouch = window.matchMedia("(pointer: coarse)").matches;
+        if (isTouch) return; // Completely disable cursor math on phones
+        
+        const dot = document.querySelector('.dd-cursor-dot');
+        const ring = document.querySelector('.dd-cursor-ring');
+        
+        if (dot && ring) {
+          // quickSetter for maximum 60fps performance
+          const xSetDot = gsap.quickSetter(dot, "x", "px");
+          const ySetDot = gsap.quickSetter(dot, "y", "px");
+          const xSetRing = gsap.quickSetter(ring, "x", "px");
+          const ySetRing = gsap.quickSetter(ring, "y", "px");
+
+          let mouseX = window.innerWidth / 2;
+          let mouseY = window.innerHeight / 2;
+          let ringX = mouseX;
+          let ringY = mouseY;
+
+          window.addEventListener("mousemove", (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            xSetDot(mouseX);
+            ySetDot(mouseY);
+          });
+
+          // Interpolation logic for the dragging ring effect
+          gsap.ticker.add(() => {
+            ringX += (mouseX - ringX) * 0.15; 
+            ringY += (mouseY - ringY) * 0.15;
+            
+            xSetRing(ringX);
+            ySetRing(ringY);
+          });
+
+          // Delegation for hover states (Expands the ring when hovering clickable elements)
+          const interactTargets = 'a, button, input, select, summary, .vault-item';
+
+          document.body.addEventListener('mouseover', (e) => {
+            if (e.target.closest(interactTargets)) ring.classList.add('active');
+          });
+
+          document.body.addEventListener('mouseout', (e) => {
+            if (e.target.closest(interactTargets)) ring.classList.remove('active');
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

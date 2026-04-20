@@ -1,0 +1,366 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<style>
+  .dd-portal-wrapper {
+    width: 100vw;
+    min-height: 100vh;
+    background-color: #ffffff; /* Flipped to white */
+    color: #000000; /* Flipped to black */
+    display: flex;
+    flex-wrap: wrap;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    padding-top: 80px; 
+  }
+
+  /* LEFT SIDE: HOW IT WORKS */
+  .dd-portal-manifesto {
+    flex: 1 1 45%;
+    padding: 6vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: #f6f6f6; /* Soft Alaïa grey for the info panel */
+    border-right: 1px solid #e0e0e0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dd-manifesto-title {
+    font-family: "Times New Roman", Times, serif;
+    font-size: clamp(3rem, 5vw, 6rem);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: -2px;
+    margin: 0 0 20px 0;
+    line-height: 0.85;
+  }
+
+  .dd-manifesto-desc {
+    font-size: 13px;
+    font-weight: 500;
+    color: #555555;
+    line-height: 1.6;
+    margin-bottom: 50px;
+    max-width: 420px;
+  }
+
+  .dd-process-list { display: flex; flex-direction: column; gap: 30px; }
+  .dd-process-step { display: flex; align-items: flex-start; gap: 15px; opacity: 0; transform: translateY(20px); }
+  
+  .dd-step-num { 
+    font-family: monospace; font-size: 11px; font-weight: 900; 
+    color: #000000; border: 1px solid #cccccc; padding: 6px 10px; border-radius: 4px; background: #ffffff;
+  }
+  
+  .dd-step-text h4 { margin: 0 0 8px 0; font-size: 13px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
+  .dd-step-text p { margin: 0; font-size: 12px; color: #666666; line-height: 1.5; }
+
+  /* RIGHT SIDE: THE FORM */
+  .dd-portal-form-container {
+    flex: 1 1 55%;
+    padding: 6vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #ffffff;
+  }
+
+  .dd-form-section-title {
+    font-size: 10px;
+    font-weight: 900;
+    color: #888888;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 40px 0 20px 0;
+    border-bottom: 1px solid #eeeeee;
+    padding-bottom: 10px;
+  }
+
+  .dd-form-section-title:first-child { margin-top: 0; }
+
+  .dd-form-group { margin-bottom: 25px; position: relative; opacity: 0; }
+  .dd-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  .dd-input, .dd-select, .dd-textarea {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #dddddd;
+    padding: 18px 20px;
+    color: #000000;
+    font-size: 12px;
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    outline: none;
+    border-radius: 4px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    box-sizing: border-box;
+  }
+
+  .dd-input:focus, .dd-select:focus, .dd-textarea:focus { 
+    border-color: #000000; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  }
+  
+  .dd-input::placeholder, .dd-textarea::placeholder { color: #aaaaaa; text-transform: uppercase; font-size: 10px; font-weight: 900; letter-spacing: 1px; }
+  .dd-select { color: #555555; text-transform: uppercase; font-weight: 900; font-size: 10px; letter-spacing: 1px; appearance: none; cursor: pointer; }
+  .dd-textarea { min-height: 100px; resize: vertical; }
+
+  /* LIVE PAYOUT CALCULATOR */
+  .dd-calculator-box {
+    background: #f9f9f9;
+    border: 1px solid #eeeeee;
+    border-radius: 4px;
+    padding: 20px;
+    margin-top: 10px;
+  }
+
+  .calc-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 10px; color: #666; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;}
+  .calc-row.total { color: #000000; font-size: 14px; border-top: 1px solid #dddddd; padding-top: 10px; margin-bottom: 0; }
+  .calc-val { font-family: monospace; font-size: 13px; color: #000000; }
+  .calc-row.total .calc-val { font-size: 16px; font-weight: bold; }
+
+  /* CUSTOM FILE UPLOAD ENGINE */
+  .dd-file-upload-wrapper {
+    position: relative; width: 100%; border: 1px dashed #cccccc; background: #fafafa;
+    padding: 40px 20px; text-align: center; border-radius: 4px; transition: 0.3s; cursor: pointer;
+  }
+  .dd-file-upload-wrapper:hover { background: #f0f0f0; border-color: #000000; }
+  .dd-file-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
+  .dd-file-label { font-size: 12px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #000000; pointer-events: none; display: block; margin-bottom: 5px; }
+  .dd-file-desc { display: block; font-family: 'Helvetica Neue', sans-serif; font-size: 11px; color: #666666; line-height: 1.4; }
+
+  .dd-image-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; }
+  .dd-preview-thumb { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
+
+  /* LEGAL CHECKBOX */
+  .dd-legal-check { display: flex; align-items: flex-start; gap: 15px; margin: 30px 0; }
+  .dd-legal-check input[type="checkbox"] { margin-top: 2px; width: 16px; height: 16px; accent-color: #000; cursor: pointer;}
+  .dd-legal-check label { font-size: 11px; color: #555; line-height: 1.5; font-weight: 600; cursor: pointer; }
+
+  /* SUBMIT BUTTON */
+  .dd-submit-btn { width: 100%; background: #000000; color: #ffffff; border: none; padding: 22px; font-size: 13px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 4px; transition: 0.3s; }
+  .dd-submit-btn:hover { background: #333333; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+
+  .dd-success-msg { background: #f0fdf4; border: 1px solid #16a34a; color: #16a34a; padding: 20px; font-weight: 900; font-size: 11px; letter-spacing: 1px; margin-bottom: 30px; text-transform: uppercase; border-radius: 4px; text-align: center; }
+
+  @media screen and (max-width: 900px) {
+    .dd-portal-manifesto, .dd-portal-form-container { flex: 1 1 100%; border-right: none; }
+    .dd-portal-manifesto { border-bottom: 1px solid #eeeeee; padding-bottom: 10vw; }
+    .dd-form-row { grid-template-columns: 1fr; gap: 0; }
+  }
+</style>
+
+<div class="dd-portal-wrapper">
+  
+  <div class="dd-portal-manifesto">
+    <h1 class="dd-manifesto-title">Thrift With Us</h1>
+    <p class="dd-manifesto-desc">Want to sell your clothes on Devil's Den? Send us your items, and we will take care of the photos, listings, shipping to the buyer, and making sure you get paid.</p>
+
+    <div class="dd-process-list">
+      <div class="dd-process-step">
+        <span class="dd-step-num">01</span>
+        <div class="dd-step-text">
+          <h4>Submit Your Item</h4>
+          <p>Fill out the form with clear photos, the item's condition, and the price you want to sell it for.</p>
+        </div>
+      </div>
+      <div class="dd-process-step">
+        <span class="dd-step-num">02</span>
+        <div class="dd-step-text">
+          <h4>We Pick It Up</h4>
+          <p>If your item fits our store, we will schedule a pickup from your address to check its quality and make sure it's authentic.</p>
+        </div>
+      </div>
+      <div class="dd-process-step">
+        <span class="dd-step-num">03</span>
+        <div class="dd-step-text">
+          <h4>We Sell It</h4>
+          <p>We take professional photos and list your item on our website so our customers can buy it.</p>
+        </div>
+      </div>
+      <div class="dd-process-step">
+        <span class="dd-step-num">04</span>
+        <div class="dd-step-text">
+          <h4>You Get Paid</h4>
+          <p>Once the item sells, we handle the shipping. You get your money immediately (minus our 15% selling fee).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dd-portal-form-container">
+    {% form 'contact', id: 'thrift-submission-form' %}
+      
+      {% if form.posted_successfully? %}
+        <div class="dd-success-msg">Success! Your submission has been sent to our team. We will email you shortly.</div>
+      {% endif %}
+      {{ form.errors | default_errors }}
+
+      <div class="dd-form-section-title">01. Your Contact Info</div>
+      
+      <div class="dd-form-group dd-form-row">
+        <input type="text" class="dd-input" name="contact[name]" placeholder="Full Name" required>
+        <input type="email" class="dd-input" name="contact[email]" placeholder="Email Address" required>
+      </div>
+
+      <div class="dd-form-group dd-form-row">
+        <input type="text" class="dd-input" name="contact[phone]" placeholder="Phone Number" required>
+        <input type="text" class="dd-input" name="contact[city]" placeholder="Pickup City / Pincode" required>
+      </div>
+
+      <div class="dd-form-section-title">02. Item Details</div>
+
+      <div class="dd-form-group">
+        <input type="text" class="dd-input" name="contact[brand]" placeholder="Brand (e.g., Stussy, Nike, Carhartt)" required>
+      </div>
+
+      <div class="dd-form-group">
+        <input type="text" class="dd-input" name="contact[item_name]" placeholder="Item Name (e.g., Black Zip-Up Hoodie)" required>
+      </div>
+
+      <div class="dd-form-group dd-form-row">
+        <select class="dd-select" name="contact[category]" required>
+          <option value="" disabled selected>Category</option>
+          <option value="clothing">Clothing</option>
+          <option value="shoes">Shoes</option>
+          <option value="accessories">Accessories</option>
+        </select>
+        <input type="text" class="dd-input" name="contact[size]" placeholder="Size on Tag (e.g., Medium, US 10)" required>
+      </div>
+
+      <div class="dd-form-group dd-form-row">
+        <input type="text" class="dd-input" name="contact[measurements]" placeholder="Measurements (e.g., Length 28in, Pit 22in)">
+        <select class="dd-select" name="contact[condition]" required>
+          <option value="" disabled selected>Condition</option>
+          <option value="new">Brand New (With Tags)</option>
+          <option value="like_new">Like New (Worn Once)</option>
+          <option value="good">Good (Light Wear, No Flaws)</option>
+          <option value="used">Used (Has visible wear/flaws)</option>
+        </select>
+      </div>
+
+      <div class="dd-form-group">
+        <textarea class="dd-textarea" name="contact[flaws]" placeholder="Please describe any stains, holes, or damage. If there are no flaws, type 'None'." required></textarea>
+      </div>
+
+      <div class="dd-form-section-title">03. Pricing & Photos</div>
+
+      <div class="dd-form-group">
+        <input type="number" class="dd-input" id="dd-price-input" name="contact[price]" placeholder="How much do you want to sell this for? (₹)" required>
+        
+        <div class="dd-calculator-box">
+           <div class="calc-row"><span>Selling Price</span> <span class="calc-val" id="calc-sale">₹0</span></div>
+           <div class="calc-row"><span>Our Selling Fee (15%)</span> <span class="calc-val" id="calc-fee">-₹0</span></div>
+           <div class="calc-row total"><span>What You Keep</span> <span class="calc-val" id="calc-payout">₹0</span></div>
+        </div>
+      </div>
+
+      <div class="dd-form-group">
+        <div class="dd-file-upload-wrapper" id="dd-dropzone">
+          <input type="file" class="dd-file-input" id="dd-file-upload" name="contact[images]" accept="image/*" multiple required>
+          <span class="dd-file-label">CLICK HERE TO UPLOAD PHOTOS</span>
+          <span class="dd-file-desc" id="dd-file-status">Please include photos of the front, back, size tag, and any flaws.<br><br><b>Security Check:</b> At least one photo must show a piece of paper next to the item with "Devil's Den" and today's date written on it.</span>
+        </div>
+        <div class="dd-image-preview-grid" id="dd-image-preview"></div>
+      </div>
+
+      <div class="dd-legal-check">
+         <input type="checkbox" id="legal-agreement" required>
+         <label for="legal-agreement">I confirm this item is real and I have described it honestly. I understand that if I send a fake or heavily damaged item that I didn't disclose, I will have to pay for the return shipping fee to get it back.</label>
+      </div>
+
+      <div class="dd-form-group">
+        <button type="submit" class="dd-submit-btn">Submit Item</button>
+      </div>
+
+    {% endform %}
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- LIVE PAYOUT CALCULATOR (15% Platform Fee) ---
+    const priceInput = document.getElementById('dd-price-input');
+    const calcSale = document.getElementById('calc-sale');
+    const calcFee = document.getElementById('calc-fee');
+    const calcPayout = document.getElementById('calc-payout');
+    const platformFeePercent = 0.15;
+
+    if(priceInput) {
+       priceInput.addEventListener('input', (e) => {
+          let price = parseFloat(e.target.value);
+          if (isNaN(price) || price < 0) price = 0;
+          
+          let fee = price * platformFeePercent;
+          let payout = price - fee;
+
+          let formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+
+          calcSale.innerText = formatter.format(price);
+          calcFee.innerText = "-" + formatter.format(fee);
+          calcPayout.innerText = formatter.format(payout);
+       });
+    }
+
+    // --- FILE UPLOAD & THUMBNAIL PREVIEW LOGIC ---
+    const fileInput = document.getElementById('dd-file-upload');
+    const fileStatus = document.getElementById('dd-file-status');
+    const dropzone = document.getElementById('dd-dropzone');
+    const previewGrid = document.getElementById('dd-image-preview');
+
+    if(fileInput) {
+      fileInput.addEventListener('change', function() {
+        previewGrid.innerHTML = ''; 
+        
+        if(this.files && this.files.length > 0) {
+          fileStatus.innerHTML = `<strong>${this.files.length} Photos Attached successfully.</strong>`;
+          fileStatus.style.color = "#16a34a"; // Green
+          dropzone.style.borderColor = "#16a34a";
+
+          Array.from(this.files).forEach(file => {
+             if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                   const img = document.createElement('img');
+                   img.src = e.target.result;
+                   img.className = 'dd-preview-thumb';
+                   previewGrid.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+             }
+          });
+        } else {
+          fileStatus.innerHTML = "Please include photos of the front, back, size tag, and any flaws.<br><br><b>Security Check:</b> At least one photo must show a piece of paper next to the item with 'Devil's Den' and today's date written on it.";
+          fileStatus.style.color = "#666666";
+          dropzone.style.borderColor = "#cccccc";
+        }
+      });
+    }
+
+    // --- GSAP ENTRANCE ANIMATIONS ---
+    if(window.gsap) {
+      const tl = gsap.timeline({ delay: 0.2 });
+      
+      tl.to('.dd-process-step', {
+        y: 0, opacity: 1, duration: 0.8, stagger: 0.15, ease: "power3.out"
+      });
+
+      tl.to('.dd-form-group, .dd-form-section-title', {
+        opacity: 1, y: 0, duration: 0.6, stagger: 0.08, ease: "power2.out"
+      }, "-=0.8");
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Damso Consignment Portal",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Damso Consignment Portal"
+    }
+  ]
+}
+{% endschema %}

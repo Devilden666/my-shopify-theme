@@ -1,0 +1,288 @@
+<div class="dd-voku-engine" id="engine-{{ section.id }}">
+  
+  <div class="voku-viewport">
+    <canvas id="canvas-{{ section.id }}"></canvas>
+  </div>
+
+  <div id="drag-proxy-{{ section.id }}" class="drag-proxy"></div>
+
+  <div class="voku-ui-layer">
+    <div class="voku-header">
+       <span class="voku-logo">DEVIL'S DEN</span>
+       <span class="voku-badge">THE ARCHIVE</span>
+    </div>
+    
+    <div class="voku-footer">
+       <p class="voku-instruction">Click and drag to explore the universe.</p>
+    </div>
+  </div>
+
+</div>
+
+<style>
+  :root { --v-bg: #f4f4f4; --v-text: #111; }
+  
+  .dd-voku-engine { 
+    position: relative; 
+    width: 100vw; 
+    height: 100vh; 
+    background: var(--v-bg); 
+    overflow: hidden; 
+    font-family: 'Helvetica Neue', Helvetica, sans-serif; 
+    cursor: grab;
+  }
+  .dd-voku-engine:active { cursor: grabbing; }
+
+  .voku-viewport { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  #canvas-{{ section.id }} { width: 100%; height: 100%; }
+
+  /* This invisible div catches the GSAP Draggable events */
+  .drag-proxy { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; opacity: 0; }
+
+  .voku-ui-layer { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; justify-content: space-between; padding: 40px; pointer-events: none; }
+  
+  .voku-header { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
+  .voku-logo { font-size: 14px; font-weight: 900; letter-spacing: -0.5px; color: var(--v-text); }
+  .voku-badge { font-size: 10px; font-weight: 800; letter-spacing: 1px; border: 1px solid rgba(0,0,0,0.1); padding: 4px 8px; border-radius: 20px; }
+
+  .voku-footer { text-align: center; width: 100%; }
+  .voku-instruction { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: #888; text-transform: uppercase; animation: pulse 2s infinite; }
+
+  @keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+  }
+
+  @media screen and (max-width: 768px) {
+    .voku-ui-layer { padding: 25px; }
+  }
+</style>
+
+<script>
+const runVokuKineticEngine = () => {
+  const container = document.querySelector('#engine-{{ section.id }}');
+  const canvas = container.querySelector('#canvas-{{ section.id }}');
+  const proxy = container.querySelector('#drag-proxy-{{ section.id }}');
+  if(!canvas || !window.THREE || !window.gsap) return;
+
+  // 1. THREE.JS SCENE SETUP
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setSize(container.offsetWidth, container.offsetHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene = new THREE.Scene();
+  
+  const camera = new THREE.PerspectiveCamera(45, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+  camera.position.z = 45; // Camera distance
+
+  // 2. CUSTOM VOKU STUDIO SHADERS (Liquid bend + RGB Shift)
+  const vertexShader = `
+    varying vec2 vUv;
+    uniform float uSpeed;
+    uniform vec2 uDirection;
+    
+    void main() {
+      vUv = uv;
+      vec3 pos = position;
+      
+      // Bends the geometry based on drag velocity
+      float bend = sin(uv.y * 3.14159) * uDirection.x * uSpeed * 2.5;
+      bend += sin(uv.x * 3.14159) * uDirection.y * uSpeed * 2.5;
+      pos.z += bend;
+      
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+    }
+  `;
+
+  const fragmentShader = `
+    varying vec2 vUv;
+    uniform sampler2D uTexture;
+    uniform float uSpeed;
+    uniform vec2 uDirection;
+    
+    void main() {
+      vec2 uv = vUv;
+      vec4 texOriginal = texture2D(uTexture, uv);
+      
+      // RGB Glitch / Tear effect
+      float shift = uSpeed * 0.08; 
+      
+      float r = texture2D(uTexture, uv + (uDirection * shift)).r;
+      float g = texOriginal.g;
+      float b = texture2D(uTexture, uv - (uDirection * shift)).b;
+      
+      // Maintain the original alpha shape to prevent weird borders
+      gl_FragColor = vec4(r, g, b, texOriginal.a);
+    }
+  `;
+
+  // 3. DATA INJECTION
+  const data = [
+    {% for block in section.blocks %}
+      {% assign img = block.settings.image | default: block.settings.linked_product.featured_image | image_url: width: 800 %}
+      { img: `{{ img }}` }{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ];
+
+  const loader = new THREE.TextureLoader();
+  loader.setCrossOrigin('anonymous');
+  
+  const meshes = [];
+  const planeGroup = new THREE.Group();
+  scene.add(planeGroup);
+
+  // 4. JITTERED GRID ALGORITHM (Fixes the "Gaps" Issue)
+  const totalItems = data.length || 1;
+  const cols = Math.ceil(Math.sqrt(totalItems));
+  const rows = Math.ceil(totalItems / cols);
+  
+  // Spacing between items
+  const spacingX = 18;
+  const spacingY = 22;
+
+  data.forEach((item, i) => {
+    if(!item.img) return;
+    
+    loader.load(item.img, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        const aspect = tex.image.width / tex.image.height;
+        let height = 12 + Math.random() * 6; // Randomize sizes for editorial look
+        let width = height * aspect;
+
+        const geom = new THREE.PlaneGeometry(width, height, 32, 32); // High segments needed to bend
+        
+        // Custom Shader Material applied to each image
+        const mat = new THREE.ShaderMaterial({
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+            uniforms: {
+                uTexture: { value: tex },
+                uSpeed: { value: 0 },
+                uDirection: { value: new THREE.Vector2(0, 0) }
+            },
+            transparent: true,
+            side: THREE.DoubleSide
+        });
+
+        const mesh = new THREE.Mesh(geom, mat);
+        
+        // Grid Math
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+
+        // Center the grid
+        const startX = (col - cols / 2) * spacingX;
+        const startY = (row - rows / 2) * spacingY;
+
+        // Jitter (Randomizes positions slightly so it doesn't look like a boring spreadsheet)
+        const jitterX = (Math.random() - 0.5) * (spacingX * 0.7);
+        const jitterY = (Math.random() - 0.5) * (spacingY * 0.7);
+
+        mesh.position.x = startX + jitterX;
+        mesh.position.y = -(startY + jitterY); // Invert Y so it builds downwards
+        
+        // Very subtle parallax depth
+        mesh.position.z = (Math.random() - 0.5) * 8;
+
+        planeGroup.add(mesh);
+        meshes.push({ mesh, mat });
+    });
+  });
+
+  // 5. KINETIC VELOCITY TRACKING
+  let currentX = 0, currentY = 0;
+  let targetX = 0, targetY = 0;
+  let velX = 0, velY = 0;
+
+  // Draggable bounds prevent users from getting lost in empty space
+  const maxDragX = (cols * spacingX) * 10;
+  const maxDragY = (rows * spacingY) * 10;
+
+  if(window.Draggable) {
+    Draggable.create(proxy, {
+      type: "x,y",
+      inertia: true,
+      bounds: { minX: -maxDragX, maxX: maxDragX, minY: -maxDragY, maxY: maxDragY },
+      onDrag: function() {
+        targetX = -this.x * 0.04; // Invert to move camera vs world
+        targetY = this.y * 0.04;
+      },
+      onThrowUpdate: function() {
+        targetX = -this.x * 0.04; 
+        targetY = this.y * 0.04;
+      }
+    });
+  }
+
+  // 6. THE RENDER LOOP (The Physics)
+  const lerp = (start, end, factor) => start + (end - start) * factor;
+
+  const animate = () => {
+    requestAnimationFrame(animate);
+
+    // Calculate Velocity
+    let prevX = currentX;
+    let prevY = currentY;
+    
+    currentX = lerp(currentX, targetX, 0.06);
+    currentY = lerp(currentY, targetY, 0.06);
+
+    velX = currentX - prevX;
+    velY = currentY - prevY;
+
+    // Move the camera
+    camera.position.x = currentX;
+    camera.position.y = currentY;
+
+    // Calculate absolute speed and direction for the Shaders
+    let speed = Math.sqrt(velX * velX + velY * velY);
+    let dirX = velX / (speed || 1);
+    let dirY = velY / (speed || 1);
+
+    // Apply the Kinetic Shader Warp to the meshes
+    meshes.forEach((obj) => {
+       // Send data to the GLSL Shaders
+       obj.mat.uniforms.uSpeed.value = lerp(obj.mat.uniforms.uSpeed.value, speed, 0.1);
+       obj.mat.uniforms.uDirection.value.set(dirX, dirY);
+       
+       // Add subtle physical tilt for extra depth
+       const targetRotX = velY * 0.5;
+       const targetRotY = velX * 0.5;
+       obj.mesh.rotation.x = lerp(obj.mesh.rotation.x, targetRotX, 0.1);
+       obj.mesh.rotation.y = lerp(obj.mesh.rotation.y, targetRotY, 0.1);
+    });
+
+    renderer.render(scene, camera);
+  };
+  
+  animate();
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(container.offsetWidth, container.offsetHeight);
+    camera.aspect = container.offsetWidth / container.offsetHeight;
+    camera.updateProjectionMatrix();
+  });
+};
+
+document.addEventListener('DD_Engines_Ready', runVokuKineticEngine);
+if(window.THREE && window.gsap && window.Draggable) runVokuKineticEngine();
+</script>
+
+{% schema %}
+{
+  "name": "Damso Kinetic Archive",
+  "settings": [],
+  "blocks": [
+    {
+      "type": "product",
+      "name": "Archive Piece",
+      "settings": [
+        { "type": "product", "id": "linked_product", "label": "Shopify Product" },
+        { "type": "image_picker", "id": "image", "label": "Override Image (Optional)" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "Damso Kinetic Archive" }]
+}
+{% endschema %}
